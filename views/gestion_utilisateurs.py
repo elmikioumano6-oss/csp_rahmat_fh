@@ -37,44 +37,66 @@ def afficher_gestion_utilisateurs():
                         st.success(f"Compte '{username}' créé avec succès !")
                         st.rerun()
 
-        # --- 2. GESTION DES COMPTES EXISTANTS (SÉLECTION SÉCURISÉE) ---
+        # --- 2. GESTION DES COMPTES EXISTANTS ---
         st.markdown("---")
         st.markdown("### 📋 Modifier ou Supprimer un compte")
         
         users = db.query(User).all()
         if users:
-            # Création d'une liste de choix lisible
-            user_dict = {f"{u.username} (Rôle : {u.role})": u for u in users}
+            user_dict = {f"{u.username} (Rôle : {u.role})": u.id for u in users}
             selected_choice = st.selectbox("Sélectionner un utilisateur à gérer", list(user_dict.keys()))
             
-            target_user = user_dict[selected_choice]
+            selected_id = user_dict[selected_choice]
+            target_user = db.query(User).filter(User.id == selected_id).first()
             
-            st.info(f"Compte sélectionné : **{target_user.username}** | Rôle : **{target_user.role}**")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                new_pwd = st.text_input("Nouveau mot de passe", type="password", key=f"pwd_{target_user.id}")
-                if st.button("🔄 Mettre à jour le mot de passe"):
-                    if new_pwd:
-                        target_user.password = new_pwd
-                        db.commit()
-                        st.success(f"Mot de passe mis à jour pour {target_user.username} !")
-                        st.rerun()
-                    else:
-                        st.warning("Veuillez saisir un mot de passe.")
-                        
-            with col2:
-                st.write("Zone de suppression")
-                # Utilisation d'un bouton direct pour supprimer l'utilisateur sélectionné
-                if st.button(f"❌ Supprimer {target_user.username}", type="primary"):
+            if target_user:
+                st.info(f"Compte sélectionné : **{target_user.username}** | Rôle : **{target_user.role}** | ID Entité actuel : **{target_user.entite_id if target_user.entite_id else 'Aucun'}**")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    new_pwd = st.text_input("Nouveau mot de passe", type="password", key=f"pwd_{target_user.id}")
+                    if st.button("🔄 Mettre à jour le mot de passe", key=f"btn_pwd_{target_user.id}"):
+                        if new_pwd:
+                            target_user.password = new_pwd
+                            db.commit()
+                            st.success(f"Mot de passe mis à jour pour {target_user.username} !")
+                            st.rerun()
+                        else:
+                            st.warning("Veuillez saisir un mot de passe.")
+                            
+                    # Option de liaison/changement d'élève si c'est un parent
+                    if target_user.role == "parent":
+                        st.markdown("---")
+                        st.write("🔗 **Association avec un élève**")
+                        eleves = db.query(Eleve).all()
+                        if eleves:
+                            current_index = 0
+                            if target_user.entite_id:
+                                for idx, el in enumerate(eleves):
+                                    if el.id == target_user.entite_id:
+                                        current_index = idx
+                                        break
+                                        
+                            new_eleve = st.selectbox("Lier au compte de l'élève", eleves, index=current_index, format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})", key=f"link_eleve_{target_user.id}")
+                            if st.button("Valider la liaison élève", key=f"btn_link_{target_user.id}"):
+                                target_user.entite_id = new_eleve.id
+                                db.commit()
+                                st.success(f"Succès ! {target_user.username} est maintenant lié à l'élève {new_eleve.nom} {new_eleve.prenom}.")
+                                st.rerun()
+                        else:
+                            st.info("Aucun élève enregistré dans l'établissement.")
+                            
+                with col2:
+                    st.write("Zone de suppression")
                     if target_user.username == "admin":
-                        st.error("Impossible de supprimer le compte administrateur principal !")
+                        st.warning("⚠️ Le compte 'admin' principal ne peut pas être supprimé.")
                     else:
-                        db.delete(target_user)
-                        db.commit()
-                        st.success(f"Compte '{target_user.username}' supprimé avec succès !")
-                        st.rerun()
+                        if st.button(f"❌ Supprimer {target_user.username}", type="primary", key=f"btn_del_{target_user.id}"):
+                            db.delete(target_user)
+                            db.commit()
+                            st.success(f"Compte '{target_user.username}' supprimé avec succès !")
+                            st.rerun()
         else:
             st.info("Aucun utilisateur trouvé.")
             
