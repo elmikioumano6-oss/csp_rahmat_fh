@@ -1,91 +1,63 @@
 import streamlit as st
-import pandas as pd
-from datetime import datetime
 from database.db_config import SessionLocal
-from database.models import User, LogActivite
+from database.models import User, Enseignant, Eleve
 
 def afficher_gestion_utilisateurs():
-    st.subheader("🔐 Gestion des Comptes Utilisateurs")
-    
+    st.subheader("⚙️ Gestion des Comptes Utilisateurs")
     db = SessionLocal()
-    
-    # --- FORMULAIRE DE CRÉATION DE COMPTE ---
-    with st.form("form_compte"):
-        st.write("### Créer un nouvel utilisateur")
-        
-        username = st.text_input("Nom d'utilisateur")
-        password = st.text_input("Mot de passe", type="password")
-        role = st.selectbox("Rôle", ["admin", "prof", "parent"])
-        
-        submitted = st.form_submit_button("Créer le compte")
-        if submitted:
-            if username.strip() and password.strip():
-                # Vérifier si l'utilisateur existe déjà
-                existe = db.query(User).filter(User.username == username).first()
-                if existe:
-                    st.error("❌ Ce nom d'utilisateur est déjà utilisé.")
-                else:
-                    nouveau_user = User(
-                        username=username,
-                        password=password, # Note: Pour plus de sécurité, il faudra hacher ce mot de passe
-                        role=role
-                    )
-                    db.add(nouveau_user)
-                    
-                    # Traçabilité
-                    db.add(LogActivite(
-                        date=datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        utilisateur=st.session_state.get('user_role', 'Admin'),
-                        action="CRÉATION UTILISATEUR",
-                        details=f"Création du compte utilisateur : {username} (Rôle: {role})"
-                    ))
-                    
-                    db.commit()
-                    st.success("✅ Compte utilisateur créé avec succès !")
-                    st.rerun()
-            else:
-                st.warning("⚠️ Veuillez remplir le nom d'utilisateur et le mot de passe.")
 
-    st.markdown("---")
-    
-    # --- ESPACE DE CORRECTION / SUPPRESSION ---
-    with st.expander("🛠️ Supprimer un compte utilisateur"):
-        utilisateurs = db.query(User).all()
-        if utilisateurs:
-            options_u = {f"{u.username} ({u.role})": u.id for u in utilisateurs}
-            choix_u = st.selectbox("Sélectionner le compte à supprimer", list(options_u.keys()))
+    # Formulaire de création
+    with st.expander("➕ Créer un nouvel utilisateur"):
+        with st.form("form_create_user"):
+            username = st.text_input("Nom d'utilisateur (Identifiant de connexion)")
+            password = st.text_input("Mot de passe", type="password")
+            role = st.selectbox("Rôle", ["admin", "proviseur", "prof", "parent"])
             
-            # Empêcher la suppression de son propre compte (sécurité simple)
-            if st.button("🗑️ Supprimer définitivement ce compte", type="primary"):
-                u_id = options_u[choix_u]
-                u_obj = db.query(User).filter(User.id == u_id).first()
-                
-                if u_obj:
-                    # Traçabilité
-                    db.add(LogActivite(
-                        date=datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        utilisateur=st.session_state.get('user_role', 'Admin'),
-                        action="SUPPRESSION UTILISATEUR",
-                        details=f"Suppression du compte : {u_obj.username}"
-                    ))
-                    db.delete(u_obj)
-                    db.commit()
-                    st.success(f"✅ Le compte '{u_obj.username}' a été supprimé.")
-                    st.rerun()
-        else:
-            st.info("Aucun utilisateur enregistré.")
+            entite_id = None
+            
+            # Logique dynamique : on affiche les listes selon le rôle choisi
+            if role == "prof":
+                profs = db.query(Enseignant).all()
+                if profs:
+                    choix_prof = st.selectbox("Choisir l'enseignant à lier", profs, format_func=lambda x: f"{x.nom} {x.prenom}")
+                    entite_id = choix_prof.id
+                else:
+                    st.warning("Aucun enseignant trouvé en base.")
+            
+            elif role == "parent":
+                eleves = db.query(Eleve).all()
+                if eleves:
+                    choix_eleve = st.selectbox("Lier au compte de l'élève (Parent)", eleves, format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})")
+                    entite_id = choix_eleve.id
+                else:
+                    st.warning("Aucun élève trouvé en base.")
 
+            if st.form_submit_button("Créer le compte"):
+                if not username or not password:
+                    st.error("Veuillez remplir tous les champs.")
+                elif db.query(User).filter(User.username == username).first():
+                    st.error("Ce nom d'utilisateur existe déjà.")
+                else:
+                    new_user = User(
+                        username=username, 
+                        password=password, 
+                        role=role, 
+                        entite_id=entite_id
+                    )
+                    db.add(new_user)
+                    db.commit()
+                    st.success(f"Compte '{username}' ({role}) créé avec succès !")
+                    st.rerun()
+
+    # Affichage de la liste des comptes existants
     st.markdown("---")
+    st.markdown("### 📋 Liste des comptes créés")
+    utilisateurs = db.query(User).all()
     
-    # --- LISTE DES COMPTES ---
-    st.write("### 📋 Liste des utilisateurs")
-    tous_users = db.query(User).all()
-    if tous_users:
-        data = [{
-            "ID": u.id,
-            "Utilisateur": u.username,
-            "Rôle": u.role
-        } for u in tous_users]
-        st.dataframe(pd.DataFrame(data), use_container_width=True)
-        
+    if utilisateurs:
+        data = [{"ID": u.id, "Utilisateur": u.username, "Rôle": u.role, "Lien Entité ID": u.entite_id} for u in utilisateurs]
+        st.table(data)
+    else:
+        st.info("Aucun compte utilisateur trouvé.")
+    
     db.close()
