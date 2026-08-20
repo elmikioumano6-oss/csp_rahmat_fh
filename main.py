@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# PERSONNALISATION AVANCÉE (CSS & SCROLLBAR)
+# PERSONNALISATION AVANCÉE (CSS & BOUTONS)
 # ==========================================
 st.markdown("""
     <style>
@@ -55,6 +55,20 @@ st.markdown("""
         color: #ffffff !important;
     }
 
+    /* Correction de la lisibilité et du style des boutons Streamlit */
+    .stButton > button {
+        background-color: #800020 !important;
+        color: #ffffff !important;
+        border: 1px solid #ffffff !important;
+        border-radius: 6px !important;
+        font-weight: bold !important;
+    }
+    .stButton > button:hover {
+        background-color: #a00028 !important;
+        color: #ffffff !important;
+        border-color: #ffcccc !important;
+    }
+
     /* Alertes */
     div.stAlert {
         background-color: rgba(15, 23, 42, 0.9) !important;
@@ -63,7 +77,6 @@ st.markdown("""
     }
 
     /* --- GESTION UNIVERSELLE DE LA BARRE DE DÉFILEMENT --- */
-    /* Pour Chrome, Edge, Safari */
     ::-webkit-scrollbar {
         width: 14px !important;
         height: 14px !important;
@@ -77,8 +90,6 @@ st.markdown("""
         border-radius: 7px !important;
         border: 3px solid #0b1329 !important;
     }
-
-    /* Pour Firefox */
     * {
         scrollbar-width: auto !important;
         scrollbar-color: #ffffff #0b1329 !important;
