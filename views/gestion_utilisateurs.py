@@ -9,7 +9,7 @@ def afficher_gestion_utilisateurs():
 
     try:
         # --- 1. CRÉATION D'UN NOUVEL UTILISATEUR ---
-        with st.expander("➕ Créer un nouvel utilisateur", expanded=False):
+        with st.expander("➕ Créer un nouvel utilisateur", expanded=True):
             username = st.text_input("Nom d'utilisateur", key="create_username")
             password = st.text_input("Mot de passe", type="password", key="create_password")
             role = st.selectbox("Rôle", ["admin", "proviseur", "prof", "parent"], key="create_role")
@@ -34,6 +34,9 @@ def afficher_gestion_utilisateurs():
                         entite_id = choix_eleves[0].id
                 else:
                     st.warning("⚠️ Aucun élève trouvé.")
+            
+            elif role in ["proviseur", "admin"]:
+                st.info(f"ℹ️ Le rôle **{role.upper()}** dispose d'un accès étendu et ne nécessite pas de liaison élève/professeur.")
 
             if st.button("Créer le compte", key="btn_create_user"):
                 if not username or not password:
@@ -59,7 +62,7 @@ def afficher_gestion_utilisateurs():
                         st.rerun()
                     except Exception as e:
                         db.rollback()
-                        st.error(f"❌ Erreur : {e}")
+                        st.error(f"❌ Erreur lors de la création : {e}")
 
         # --- 2. LISTE ET STATUT DES UTILISATEURS ---
         st.markdown("---")
@@ -82,8 +85,8 @@ def afficher_gestion_utilisateurs():
                      elif u.entite_id:
                          eleve = db.query(Eleve).filter(Eleve.id == u.entite_id).first()
                          liaison = f"Élève : {eleve.nom} {eleve.prenom}" if eleve else "Aucun"
-                 elif u.role == "admin":
-                     liaison = "Accès Complet (Admin)"
+                 elif u.role in ["admin", "proviseur"]:
+                     liaison = f"Accès Global ({u.role.upper()})"
                 
                  is_active_val = getattr(u, 'is_active', True)
                  statut_texte = "🟢 Actif" if is_active_val else "🔴 Bloqué / Déconnecté"
@@ -112,27 +115,27 @@ def afficher_gestion_utilisateurs():
                 
                 col_action1, col_action2, col_action3 = st.columns(3)
                 
-                # --- BOUTON 1 : RÉINITIALISATION RAPIDE DU MOT DE PASSE ---
+                # --- BOUTON 1 : RÉINITIALISATION DU MOT DE PASSE ---
                 with col_action1:
                     st.markdown("#### 🔑 Réinitialisation")
                     if st.button("🔄 Réinitialiser MDP à '1234'", key=f"btn_reset_pwd_{target_user.id}"):
                         target_user.password = "1234"
                         db.commit()
-                        st.success(f"Mot de passe de '{target_user.username}' réinitialisé à **1234** avec succès !")
+                        st.success(f"Mot de passe de '{target_user.username}' réinitialisé à **1234** !")
                         st.rerun()
 
-                # --- BOUTON 2 : BLOQUER / DÉCONNECTER LE COMPTE ---
+                # --- BOUTON 2 : BLOQUER / ACTIVER ---
                 with col_action2:
                     st.markdown("#### 🔒 Sécurité & Accès")
                     is_active_current = getattr(target_user, 'is_active', True)
                     if target_user.username == "admin":
-                        st.info("Le compte admin ne peut pas être bloqué.")
+                        st.info("Le compte admin principal ne peut pas être bloqué.")
                     else:
                         if is_active_current:
                             if st.button("🚫 Bloquer / Déconnecter", type="secondary", key=f"btn_block_{target_user.id}"):
                                 target_user.is_active = False
                                 db.commit()
-                                st.warning(f"Le compte '{target_user.username}' a été bloqué et déconnecté !")
+                                st.warning(f"Le compte '{target_user.username}' a été bloqué !")
                                 st.rerun()
                         else:
                             if st.button("✅ Activer le compte", type="primary", key=f"btn_unblock_{target_user.id}"):
@@ -145,73 +148,13 @@ def afficher_gestion_utilisateurs():
                 with col_action3:
                     st.markdown("#### ❌ Suppression")
                     if target_user.username == "admin":
-                        st.info("Le compte admin ne peut pas être supprimé.")
+                        st.info("Le compte admin principal ne peut pas être supprimé.")
                     else:
                         if st.button(f"Supprimer le compte", type="primary", key=f"del_user_{target_user.id}"):
                             db.delete(target_user)
                             db.commit()
-                            st.error(f"Compte '{target_user.username}' supprimé définitivement !")
+                            st.error(f"Compte '{target_user.username}' supprimé !")
                             st.rerun()
-
-                # --- MODIFICATION AVANCÉE DES LIAISONS (ENFANTS / PROFS) ---
-                st.markdown("---")
-                with st.expander("🔗 Modifier les liaisons (Enfants / Professeur)"):
-                    if target_user.role == "parent":
-                        eleves = db.query(Eleve).all()
-                        if eleves:
-                            current_eleve_ids = []
-                            raw_enfants = getattr(target_user, 'enfants_ids', None)
-                            if raw_enfants:
-                                current_eleve_ids = [int(i) for i in raw_enfants.split(",") if i.isdigit()]
-                            elif target_user.entite_id:
-                                current_eleve_ids = [target_user.entite_id]
-                                
-                            default_eleves = [el for el in eleves if el.id in current_eleve_ids]
-                            
-                            selected_enfants = st.multiselect(
-                                "Enfants rattachés à ce parent", 
-                                eleves, 
-                                default=default_eleves, 
-                                format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})", 
-                                key=f"multi_eleves_{target_user.id}"
-                            )
-                            
-                            if st.button("💾 Enregistrer les enfants liés", key=f"save_enfants_{target_user.id}"):
-                                val_str = ",".join([str(e.id) for e in selected_enfants]) if selected_enfants else None
-                                if hasattr(target_user, 'enfants_ids'):
-                                    target_user.enfants_ids = val_str
-                                target_user.entite_id = selected_enfants[0].id if selected_enfants else None
-                                db.commit()
-                                st.success("Liaisons des enfants mises à jour avec succès !")
-                                st.rerun()
-                        else:
-                            st.info("Aucun élève enregistré.")
-
-                    elif target_user.role == "prof":
-                        profs = db.query(Enseignant).all()
-                        if profs:
-                            current_prof_index = 0
-                            if target_user.entite_id:
-                                for idx, p in enumerate(profs):
-                                    if p.id == target_user.entite_id:
-                                        current_prof_index = idx
-                                        break
-                                        
-                            selected_prof = st.selectbox(
-                                "Profil Enseignant lié", 
-                                profs, 
-                                index=current_prof_index, 
-                                format_func=lambda x: f"{x.nom} {x.prenom}", 
-                                key=f"select_prof_{target_user.id}"
-                            )
-                            
-                            if st.button("💾 Enregistrer le lien Enseignant", key=f"save_prof_{target_user.id}"):
-                                target_user.entite_id = selected_prof.id
-                                db.commit()
-                                st.success("Lien enseignant mis à jour avec succès !")
-                                st.rerun()
-                        else:
-                            st.info("Aucun enseignant enregistré.")
         else:
             st.info("Aucun utilisateur trouvé.")
             
