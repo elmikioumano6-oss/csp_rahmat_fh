@@ -178,7 +178,7 @@ def main():
                 "NAVIGATION",
                 [
                     "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
-                    "Personnels et rôles", "Gestion Comptes", "Inscription Élèves", 
+                    "Personnels et rôles", "Utilisateurs", "Inscription Élèves", 
                     "Import Photos en Masse", "Cartes Scolaires", "Saisie de notes", 
                     "Consultations des notes", "Conseil de classe", "Bulletins", 
                     "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", "Emploi du temps", "Cahier de texte", 
@@ -244,7 +244,7 @@ def main():
         elif page == "Matières & Coeffs": afficher_matieres()
         elif page == "Enseignants": afficher_enseignants()
         elif page == "Personnels et rôles": afficher_personnels(niveau_actif)
-        elif page == "Gestion Comptes": afficher_gestion_utilisateurs()
+        elif page == "Utilisateurs": afficher_gestion_utilisateurs()
         elif page == "Inscription Élèves": afficher_eleves(niveau_actif)
         elif page == "Import Photos en Masse": afficher_import_photos_masse(niveau_actif)
         elif page == "Cartes Scolaires": afficher_cartes_scolaires(niveau_actif)
