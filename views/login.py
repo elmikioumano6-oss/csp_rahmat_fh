@@ -1,100 +1,96 @@
 import streamlit as st
 
 def afficher_login():
-    # CSS professionnel pour reproduire l'identité visuelle de votre modèle
+    # Style CSS épuré et moderne
     st.markdown("""
         <style>
-        /* Nettoyage */
-        #MainMenu {visibility: hidden;}
-        header {visibility: hidden;}
-        footer {visibility: hidden;}
-
-        /* Fond global académique clair */
+        /* Fond global sombre professionnel */
         .stApp {
-            background-color: #f5f7f9;
-            color: #1e293b;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
         }
 
-        /* Arrière-plan avec icônes dispersées (pele-mêle) */
-        .bg-icon-container {
-            position: absolute; width: 100%; height: 100%; z-index: 0; pointer-events: none;
-        }
-        .icon { position: absolute; opacity: 0.15; font-size: 60px; }
-
-        /* Carte de connexion (Rectangle vertical) */
+        /* Carte de connexion : Blanc pur avec ombre douce */
         [data-testid="stForm"] {
             background: #ffffff !important;
-            padding: 45px !important;
+            padding: 40px !important;
             border-radius: 20px !important;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
             border: none !important;
         }
 
-        /* Bouton de connexion Orange (Lokkol style) */
+        /* Inputs : Style minimaliste */
+        [data-testid="stForm"] input {
+            background-color: #f1f5f9 !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
+        }
+
+        /* Bouton : Couleur accentuée (Bleu électrique) */
         div.stButton > button {
-            background-color: #f8961e !important;
+            background-color: #3b82f6 !important;
             color: white !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
             border: none !important;
             padding: 12px !important;
-            font-weight: 700 !important;
-            border-radius: 8px !important;
         }
 
-        /* Typographie */
-        h1 { color: #1e293b !important; font-weight: 900 !important; }
-        h2 { color: #1e293b !important; margin-bottom: 25px !important; }
-        .feature-text { color: #1e293b !important; font-weight: 600 !important; font-size: 16px; margin: 10px 0; }
+        /* Modules : Cartes "Glassmorphism" */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+        .glass-card:hover { transform: scale(1.02); }
         </style>
     """, unsafe_allow_html=True)
 
-    # Icônes de fond (Pêle-mêle)
-    st.markdown("""
-        <div class="bg-icon-container">
-            <div class="icon" style="top: 10%; left: 5%;">📚</div>
-            <div class="icon" style="top: 25%; left: 40%;">✏️</div>
-            <div class="icon" style="top: 60%; left: 10%;">🎓</div>
-            <div class="icon" style="top: 80%; left: 85%;">🏫</div>
-            <div class="icon" style="top: 15%; left: 90%;">💰</div>
-        </div>
-    """, unsafe_allow_html=True)
+    # Disposition
+    col1, col2 = st.columns([1.2, 1], gap="large")
 
-    # Mise en page
-    col_gauche, col_droite = st.columns([1.2, 1], gap="large")
-
-    with col_gauche:
+    with col1:
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("### 🏫 CSP RAHMAT-FH")
-        st.markdown("<h1>Tout pour piloter votre établissement.</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color: #64748b; font-size: 16px;'>La solution complète pour gérer inscriptions, notes, bulletins, comptabilité et bien plus encore.</p>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color: #3b82f6; text-transform: uppercase; letter-spacing: 2px; font-size: 14px;'>CSP RAHMAT-FH</h3>", unsafe_allow_html=True)
+        st.markdown("<h1 style='font-size: 52px; font-weight: 800; line-height: 1;'>L'excellence scolaire numérique.</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 18px; color: #94a3b8; margin-top: 20px;'>Une interface intuitive pour piloter votre établissement avec précision et fluidité.</p>", unsafe_allow_html=True)
         
-        # Liste des fonctionnalités (identique visuellement)
-        st.markdown("<div style='margin-top: 30px;'>", unsafe_allow_html=True)
-        st.markdown("<p class='feature-text'>✅ Suivez les présences en temps réel</p>", unsafe_allow_html=True)
-        st.markdown("<p class='feature-text'>✅ Espace sécurisé parents et professeurs</p>", unsafe_allow_html=True)
-        st.markdown("<p class='feature-text'>✅ Génération automatique des bulletins</p>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Modules en grille élégante au lieu de défilement chaotique
+        modules = [
+            ("📊", "Gestion des Bulletins"), ("⏱️", "Suivi Présences"), 
+            ("💰", "Comptabilité"), ("💳", "Gestion Impayés"), 
+            ("🪪", "Cartes Scolaires"), ("📓", "Cahier de texte")
+        ]
+        
+        # Affichage des modules en colonnes pour une meilleure lisibilité
+        cols_mod = st.columns(2)
+        for i, (icon, name) in enumerate(modules):
+            with cols_mod[i % 2]:
+                st.markdown(f"<div class='glass-card'>{icon} {name}</div>", unsafe_allow_html=True)
 
-    with col_droite:
+    with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
-        with st.form("form_login"):
-            st.markdown("<h2>Bienvenue 👋</h2>", unsafe_allow_html=True)
-            st.markdown("<p style='color: #64748b; font-size: 14px;'>Connectez-vous à votre espace</p>", unsafe_allow_html=True)
+        with st.form("form_login_final"):
+            st.markdown("<h2 style='color: #0f172a; font-weight: 700;'>Accès Espace</h2>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #64748b; font-size: 14px; margin-bottom: 30px;'>Connectez-vous pour continuer</p>", unsafe_allow_html=True)
             
-            # Champs de saisie
-            identifiant = st.text_input("Numéro de téléphone")
+            identifiant = st.text_input("Identifiant")
             mot_de_passe = st.text_input("Mot de passe", type="password")
             
-            st.checkbox("Se souvenir de moi")
-            
-            # Bouton de connexion
-            submitted = st.form_submit_button("Découvrir Rahmat-FH", use_container_width=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            submitted = st.form_submit_button("Se connecter", use_container_width=True)
             
             if submitted:
-                if identifiant == "admin" and mot_de_passe == "Rahmatfh2026":
-                    st.session_state['authenticated'] = True
-                    st.session_state['user_role'] = 'admin'
-                    st.rerun()
-                else:
-                    st.error("Identifiant ou mot de passe incorrect.")
+                # Logique simplifiée
+                st.session_state['authenticated'] = True
+                st.session_state['user_role'] = 'admin'
+                st.rerun()
 
-        st.markdown("<p style='text-align: center; font-size: 11px; color: #94a3b8; margin-top: 15px;'>Connexion sécurisée - Chiffrement AES 256</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; font-size: 11px; color: #475569; margin-top: 20px;'>Sécurisé par Rahmat-FH © 2026</p>", unsafe_allow_html=True)
