@@ -3,12 +3,12 @@ from database.db_config import SessionLocal
 from database.models import User, Enseignant, Eleve
 
 def afficher_gestion_utilisateurs():
-    st.subheader("⚙️ Gestion des Comptes & Associations")
+    st.subheader("👥 Gestion des Utilisateurs & Statuts")
     db = SessionLocal()
 
     try:
         # --- 1. CRÉATION D'UN NOUVEL UTILISATEUR ---
-        with st.expander("➕ Créer un compte et lier ses entités", expanded=True):
+        with st.expander("➕ Créer un nouvel utilisateur", expanded=False):
             username = st.text_input("Nom d'utilisateur", key="create_username")
             password = st.text_input("Mot de passe", type="password", key="create_password")
             role = st.selectbox("Rôle", ["admin", "proviseur", "prof", "parent"], key="create_role")
@@ -21,9 +21,8 @@ def afficher_gestion_utilisateurs():
                 if profs:
                     choix_prof = st.selectbox("Lier au profil Enseignant", profs, format_func=lambda x: f"{x.nom} {x.prenom} (Spécialité : {getattr(x, 'specialite', 'N/A')})", key="create_prof_link")
                     entite_id = choix_prof.id
-                    st.info("💡 Le professeur accèdera aux modules de saisie et de suivi selon ses affectations.")
                 else:
-                    st.warning("⚠️ Aucun enseignant trouvé. Veuillez d'abord en créer dans le menu 'Enseignants'.")
+                    st.warning("⚠️ Aucun enseignant trouvé.")
 
             elif role == "parent":
                 eleves = db.query(Eleve).all()
@@ -31,9 +30,9 @@ def afficher_gestion_utilisateurs():
                     choix_eleves = st.multiselect("Lier aux enfants (Plusieurs choix possibles)", eleves, format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})", key="create_parent_enfants")
                     if choix_eleves:
                         enfants_ids_str = ",".join([str(e.id) for e in choix_eleves])
-                        entite_id = choix_eleves[0].id  # Pour la rétrocompatibilité
+                        entite_id = choix_eleves[0].id
                 else:
-                    st.warning("⚠️ Aucun élève trouvé. Veuillez d'abord inscrire des élèves.")
+                    st.warning("⚠️ Aucun élève trouvé.")
 
             if st.button("Créer le compte", key="btn_create_user"):
                 if not username or not password:
@@ -53,12 +52,44 @@ def afficher_gestion_utilisateurs():
                     st.success(f"Compte '{username}' ({role}) créé avec succès !")
                     st.rerun()
 
-        # --- 2. GESTION ET MODIFICATION DES COMPTES EXISTANTS ---
+        # --- 2. LISTE ET STATUT DES UTILISATEURS ---
         st.markdown("---")
-        st.markdown("### 📋 Modifier ou Lier les comptes existants")
+        st.markdown("### 📋 Liste des utilisateurs enregistrés")
         
         users = db.query(User).all()
         if users:
+            # Tableau récapitulatif
+            data_users = []
+            for u in users:
+                 liaison = "Aucune"
+                 if u.role == "prof" and u.entite_id:
+                     prof = db.query(Enseignant).filter(Enseignant.id == u.entite_id).first()
+                     liaison = f"Enseignant : {prof.nom} {prof.prenom}" if prof else "ID Inconnu"
+                 elif u.role == "parent":
+                     if u.enfants_ids:
+                         ids = [int(i) for i in u.enfants_ids.split(",") if i.isdigit()]
+                         eleves_lies = db.query(Eleve).filter(Eleve.id.in_(ids)).all()
+                         liaison = ", ".join([f"{e.nom} {e.prenom}" for e in eleves_lies]) if eleves_lies else "Aucun enfant"
+                     elif u.entite_id:
+                         eleve = db.query(Eleve).filter(Eleve.id == u.entite_id).first()
+                         liaison = f"Élève : {eleve.nom} {eleve.prenom}" if eleve else "Aucun"
+                 elif u.role == "admin":
+                     liaison = "Accès Complet (Admin)"
+                
+                 data_users.append({
+                     "Nom d'utilisateur": u.username,
+                     "Rôle": u.role.upper(),
+                     "Rattachement": liaison,
+                     "Statut": "🟢 Actif / Enregistré"
+                 })
+            
+            import pandas as pd
+            st.dataframe(pd.DataFrame(data_users), use_container_width=True)
+
+            # --- 3. MODIFICATION / SUPPRESSION ---
+            st.markdown("---")
+            st.markdown("### ⚙️ Modifier ou Gérer un compte spécifique")
+            
             user_dict = {f"{u.username} (Rôle : {u.role})": u.id for u in users}
             selected_choice = st.selectbox("Sélectionner un compte utilisateur", list(user_dict.keys()), key="select_manage_account")
             
@@ -66,8 +97,6 @@ def afficher_gestion_utilisateurs():
             target_user = db.query(User).filter(User.id == selected_id).first()
             
             if target_user:
-                st.info(f"Compte en cours : **{target_user.username}** | Rôle : **{target_user.role.upper()}**")
-                
                 col1, col2 = st.columns(2)
                 
                 with col1:
@@ -81,10 +110,9 @@ def afficher_gestion_utilisateurs():
                         else:
                             st.warning("Veuillez entrer un mot de passe.")
                             
-                    # ASSOCIATION PARENT (Multi-enfants)
+                    # ASSOCIATION PARENT
                     if target_user.role == "parent":
-                        st.markdown("---")
-                        st.markdown("#### 🔗 Association Parent ➔ Élèves")
+                        st.markdown("#### 🔗 Modifier les enfants rattachés")
                         eleves = db.query(Eleve).all()
                         if eleves:
                             current_eleve_ids = []
@@ -96,26 +124,23 @@ def afficher_gestion_utilisateurs():
                             default_eleves = [el for el in eleves if el.id in current_eleve_ids]
                             
                             selected_enfants = st.multiselect(
-                                "Enfants rattachés à ce parent", 
+                                "Enfants rattachés", 
                                 eleves, 
                                 default=default_eleves, 
                                 format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})", 
                                 key=f"multi_eleves_{target_user.id}"
                             )
                             
-                            if st.button("💾 Enregistrer les enfants liés", key=f"save_enfants_{target_user.id}"):
+                            if st.button("💾 Enregistrer les modifications", key=f"save_enfants_{target_user.id}"):
                                 target_user.enfants_ids = ",".join([str(e.id) for e in selected_enfants]) if selected_enfants else None
                                 target_user.entite_id = selected_enfants[0].id if selected_enfants else None
                                 db.commit()
-                                st.success("Liaisons des enfants mises à jour avec succès !")
+                                st.success("Liaisons mises à jour avec succès !")
                                 st.rerun()
-                        else:
-                            st.info("Aucun élève enregistré.")
 
                     # ASSOCIATION PROFESSEUR
                     elif target_user.role == "prof":
-                        st.markdown("---")
-                        st.markdown("#### 🔗 Association Professeur ➔ Fiche Enseignant")
+                        st.markdown("#### 🔗 Modifier la fiche Enseignant liée")
                         profs = db.query(Enseignant).all()
                         if profs:
                             current_prof_index = 0
@@ -126,30 +151,28 @@ def afficher_gestion_utilisateurs():
                                         break
                                         
                             selected_prof = st.selectbox(
-                                "Lier au profil Enseignant", 
+                                "Profil Enseignant", 
                                 profs, 
                                 index=current_prof_index, 
-                                format_func=lambda x: f"{x.nom} {x.prenom} (Spécialité : {getattr(x, 'specialite', 'N/A')})", 
+                                format_func=lambda x: f"{x.nom} {x.prenom}", 
                                 key=f"select_prof_{target_user.id}"
                             )
                             
-                            if st.button("💾 Enregistrer le lien Enseignant", key=f"save_prof_{target_user.id}"):
+                            if st.button("💾 Enregistrer le lien", key=f"save_prof_{target_user.id}"):
                                 target_user.entite_id = selected_prof.id
                                 db.commit()
-                                st.success(f"Compte lié à l'enseignant {selected_prof.nom} {selected_prof.prenom} !")
+                                st.success("Lien enseignant mis à jour !")
                                 st.rerun()
-                        else:
-                            st.info("Aucun enseignant enregistré.")
 
                 with col2:
-                    st.markdown("#### ❌ Suppression du compte")
+                    st.markdown("#### ❌ Suppression")
                     if target_user.username == "admin":
                         st.warning("⚠️ Le compte admin principal ne peut pas être supprimé.")
                     else:
-                        if st.button(f"Supprimer le compte {target_user.username}", type="primary", key=f"del_user_{target_user.id}"):
+                        if st.button(f"Supprimer {target_user.username}", type="primary", key=f"del_user_{target_user.id}"):
                             db.delete(target_user)
                             db.commit()
-                            st.success(f"Compte '{target_user.username}' supprimé avec succès !")
+                            st.success(f"Compte '{target_user.username}' supprimé !")
                             st.rerun()
         else:
             st.info("Aucun utilisateur trouvé.")
