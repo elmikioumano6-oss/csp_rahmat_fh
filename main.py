@@ -41,6 +41,20 @@ st.markdown("""
         color: #000000 !important;
     }
 
+    /* Harmoniser le menu déroulant des listes avec le thème sombre */
+    div[data-baseweb="popover"], div[data-baseweb="menu"], div[role="listbox"] {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+    }
+    div[data-baseweb="option"] {
+        background-color: #1e293b !important;
+        color: #ffffff !important;
+    }
+    div[data-baseweb="option"]:hover {
+        background-color: #800020 !important;
+        color: #ffffff !important;
+    }
+
     /* Alertes */
     div.stAlert {
         background-color: rgba(15, 23, 42, 0.9) !important;
@@ -90,6 +104,7 @@ with engine.connect() as connection:
 
     safe_add_column("users", "entite_id", "INTEGER")
     safe_add_column("users", "enfants_ids", "TEXT")
+    safe_add_column("users", "is_active", "BOOLEAN DEFAULT 1")
     safe_add_column("notes", "semestre", "INTEGER DEFAULT 1")
     safe_add_column("classes", "cycle", "TEXT")
     safe_add_column("classes", "tarif_scolarite", "FLOAT DEFAULT 0.0")
@@ -109,10 +124,11 @@ def verifier_et_creer_comptes_par_defaut():
         
         admin_user = db.query(User).filter(User.username == "admin").first()
         if not admin_user:
-            db.add(User(username="admin", password="Rahmatfh2026", role="admin", entite_id=None))
+            db.add(User(username="admin", password="Rahmatfh2026", role="admin", entite_id=None, is_active=True))
         else:
             admin_user.password = "Rahmatfh2026"
             admin_user.role = "admin"
+            admin_user.is_active = True
             
         db.commit()
     finally:
@@ -129,6 +145,18 @@ if 'authenticated' not in st.session_state:
 if not st.session_state['authenticated']:
     afficher_login()
     st.stop()
+
+# Vérification si le compte a été bloqué entre-temps
+db_check = SessionLocal()
+try:
+    current_user_db = db_check.query(User).filter(User.username == st.session_state.get('username')).first()
+    if current_user_db and not getattr(current_user_db, 'is_active', True):
+        st.error("🚫 Votre compte a été bloqué ou désactivé par l'administrateur.")
+        st.session_state.update({'authenticated': False, 'user_role': 'admin', 'username': None})
+        db_check.close()
+        st.rerun()
+finally:
+    db_check.close()
 
 # Importation de toutes les vues
 from views.classes import afficher_classes
@@ -178,7 +206,7 @@ def main():
                 "NAVIGATION",
                 [
                     "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
-                    "Personnels et rôles", "Utilisateurs", "Inscription Élèves", 
+                    "Personnels et rôles", "Gestion Comptes", "Utilisateurs", "Inscription Élèves", 
                     "Import Photos en Masse", "Cartes Scolaires", "Saisie de notes", 
                     "Consultations des notes", "Conseil de classe", "Bulletins", 
                     "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", "Emploi du temps", "Cahier de texte", 
@@ -188,7 +216,7 @@ def main():
                 ],
                 icons=[
                     'calendar-event', 'building', 'book', 'person-badge', 'shield-lock', 'people-fill',
-                    'people', 'folder-plus', 'card-list', 'pencil-square', 'journal-text', 'people-fill', 
+                    'people', 'people', 'folder-plus', 'card-list', 'pencil-square', 'journal-text', 'people-fill', 
                     'file-earmark-text', 'eye', 'file-earmark-pdf', 'graph-up-arrow', 'calendar3', 'journal-bookmark', 'calendar-check', 'check2-square',
                     'cash-coin', 'wallet2', 'graph-up', 'receipt', 'file-bar-graph', 'clock-history', 'chat-dots', 'speedometer'
                 ],
@@ -244,7 +272,7 @@ def main():
         elif page == "Matières & Coeffs": afficher_matieres()
         elif page == "Enseignants": afficher_enseignants()
         elif page == "Personnels et rôles": afficher_personnels(niveau_actif)
-        elif page == "Utilisateurs": afficher_gestion_utilisateurs()
+        elif page in ["Gestion Comptes", "Utilisateurs"]: afficher_gestion_utilisateurs()
         elif page == "Inscription Élèves": afficher_eleves(niveau_actif)
         elif page == "Import Photos en Masse": afficher_import_photos_masse(niveau_actif)
         elif page == "Cartes Scolaires": afficher_cartes_scolaires(niveau_actif)
