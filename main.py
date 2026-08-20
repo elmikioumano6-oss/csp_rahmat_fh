@@ -83,7 +83,7 @@ st.markdown("""
 Base.metadata.create_all(bind=engine)
 
 # ==========================================
-# INITIALISATION AUTOMATIQUE DES COMPTES DE TEST
+# INITIALISATION ET MISE À JOUR DES COMPTES DE TEST
 # ==========================================
 def verifier_et_creer_comptes_par_defaut():
     db = SessionLocal()
@@ -96,15 +96,22 @@ def verifier_et_creer_comptes_par_defaut():
         ]
         
         for data in comptes:
-            existe = db.query(User).filter(User.username == data["username"]).first()
-            if not existe:
-                nouvel_utilisateur = User(
+            user = db.query(User).filter(User.username == data["username"]).first()
+            if not user:
+                # Création si l'utilisateur n'existe pas
+                user = User(
                     username=data["username"],
                     password=data["password"],
                     role=data["role"],
                     entite_id=data["entite_id"]
                 )
-                db.add(nouvel_utilisateur)
+                db.add(user)
+            else:
+                # Mise à jour forcée du mot de passe et du rôle si le compte existe déjà
+                user.password = data["password"]
+                user.role = data["role"]
+                user.entite_id = data["entite_id"]
+                
         db.commit()
     except Exception as e:
         print(f"Erreur d'initialisation des comptes : {e}")
