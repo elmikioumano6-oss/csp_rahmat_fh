@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from urllib.parse import quote
 from database.db_config import SessionLocal
 from database.models import Message, Eleve, LogActivite
 
@@ -26,7 +27,7 @@ def afficher_messages(niveau_actif=None):
             sujet = st.text_input("Objet du message")
             contenu = st.text_area("Contenu du message")
             
-            submitted = st.form_submit_button("Envoyer le message")
+            submitted = st.form_submit_button("Enregistrer et Préparer l'envoi")
             if submitted:
                 if contenu.strip():
                     try:
@@ -44,18 +45,59 @@ def afficher_messages(niveau_actif=None):
                             date=datetime.now().strftime("%Y-%m-%d %H:%M"),
                             utilisateur=st.session_state.get('user_role', 'Admin'),
                             action="ENVOI MESSAGE",
-                            details=f"Message envoyé via {canal} - Sujet: {sujet}"
+                            details=f"Message enregistré via {canal} - Sujet: {sujet}"
                         ))
                         
                         db.commit()
-                        st.success("✅ Message enregistré et envoyé avec succès !")
-                        db.close()
-                        st.rerun()
+                        
+                        # Stocker dans session_state pour afficher le bouton d'envoi externe instantanément
+                        st.session_state['dernier_message'] = {
+                            'telephone': telephone_dest,
+                            'contenu': f"[{sujet}] {contenu}" if sujet else contenu,
+                            'canal': canal
+                        }
+                        st.success("✅ Message enregistré dans l'historique avec succès !")
                     except Exception as e:
                         db.rollback()
-                        st.error(f"❌ Erreur lors de l'envoi du message : {e}")
+                        st.error(f"❌ Erreur lors de l'enregistrement : {e}")
                 else:
                     st.warning("⚠️ Veuillez saisir le contenu du message.")
+
+        # --- BOUTON D'OUVERTURE DIRECTE WHATSAPP / SMS ---
+        if 'dernier_message' in st.session_state:
+            msg_info = st.session_state['dernier_message']
+            tel = msg_info['telephone']
+            texte = msg_info['contenu']
+            canal_choisi = msg_info['canal']
+            
+            if tel:
+                # Nettoyage du numéro de téléphone
+                tel_clean = "".join(filter(str.isdigit, tel))
+                # Ajout automatique de l'indicatif du Niger (+227) si le numéro comporte 8 chiffres
+                if len(tel_clean) == 8:
+                    tel_clean = "227" + tel_clean
+                
+                encoded_text = quote(texte)
+                
+                st.markdown("---")
+                st.info("🚀 **Action rapide : Ouvrir l'application externe pour envoyer**")
+                
+                if "WhatsApp" in canal_choisi:
+                    wa_url = f"https://wa.me/{tel_clean}?text={encoded_text}"
+                    st.markdown(f"""
+                        <a href="{wa_url}" target="_blank" style="display:inline-block;padding:12px 20px;background-color:#25D366;color:white;text-decoration:none;border-radius:6px;font-weight:bold;font-size:16px;">
+                            📲 Cliquer ici pour envoyer via WhatsApp
+                        </a>
+                    """, unsafe_allow_html=True)
+                else:
+                    sms_url = f"sms:{tel_clean}?body={encoded_text}"
+                    st.markdown(f"""
+                        <a href="{sms_url}" style="display:inline-block;padding:12px 20px;background-color:#007BFF;color:white;text-decoration:none;border-radius:6px;font-weight:bold;font-size:16px;">
+                            📱 Cliquer ici pour envoyer par SMS
+                        </a>
+                    """, unsafe_allow_html=True)
+            else:
+                st.warning("⚠️ Aucun numéro de téléphone associé à cet élève pour un envoi direct.")
 
         st.markdown("---")
         
