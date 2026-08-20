@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from database.db_config import SessionLocal
 from database.models import User, Enseignant, Eleve
 
@@ -8,7 +9,7 @@ def afficher_gestion_utilisateurs():
 
     try:
         # --- 1. CRÉATION D'UN NOUVEL UTILISATEUR ---
-        with st.expander("➕ Créer un nouvel utilisateur", expanded=False):
+        with st.expander("➕ Créer un nouvel utilisateur", expanded=True):
             username = st.text_input("Nom d'utilisateur", key="create_username")
             password = st.text_input("Mot de passe", type="password", key="create_password")
             role = st.selectbox("Rôle", ["admin", "proviseur", "prof", "parent"], key="create_role")
@@ -19,10 +20,10 @@ def afficher_gestion_utilisateurs():
             if role == "prof":
                 profs = db.query(Enseignant).all()
                 if profs:
-                    choix_prof = st.selectbox("Lier au profil Enseignant", profs, format_func=lambda x: f"{x.nom} {x.prenom} (Spécialité : {getattr(x, 'specialite', 'N/A')})", key="create_prof_link")
+                    choix_prof = st.selectbox("Lier au profil Enseignant", profs, format_func=lambda x: f"{x.nom} {x.prenom}", key="create_prof_link")
                     entite_id = choix_prof.id
                 else:
-                    st.warning("⚠️ Aucun enseignant trouvé.")
+                    st.warning("⚠️ Aucun enseignant trouvé dans l'établissement.")
 
             elif role == "parent":
                 eleves = db.query(Eleve).all()
@@ -32,7 +33,7 @@ def afficher_gestion_utilisateurs():
                         enfants_ids_str = ",".join([str(e.id) for e in choix_eleves])
                         entite_id = choix_eleves[0].id
                 else:
-                    st.warning("⚠️ Aucun élève trouvé.")
+                    st.warning("⚠️ Aucun élève trouvé dans l'établissement.")
 
             if st.button("Créer le compte", key="btn_create_user"):
                 if not username or not password:
@@ -40,17 +41,24 @@ def afficher_gestion_utilisateurs():
                 elif db.query(User).filter(User.username == username).first():
                     st.error("Ce nom d'utilisateur existe déjà.")
                 else:
-                    new_user = User(
-                        username=username,
-                        password=password,
-                        role=role,
-                        entite_id=entite_id,
-                        enfants_ids=enfants_ids_str
-                    )
-                    db.add(new_user)
-                    db.commit()
-                    st.success(f"Compte '{username}' ({role}) créé avec succès !")
-                    st.rerun()
+                    try:
+                        user_data = {
+                            "username": username,
+                            "password": password,
+                            "role": role,
+                            "entite_id": entite_id
+                        }
+                        if hasattr(User, 'enfants_ids'):
+                            user_data["enfants_ids"] = enfants_ids_str
+
+                        new_user = User(**user_data)
+                        db.add(new_user)
+                        db.commit()
+                        st.success(f"Compte '{username}' ({role}) créé avec succès !")
+                        st.rerun()
+                    except Exception as e:
+                        db.rollback()
+                        st.error(f"❌ Erreur lors de l'enregistrement en base de données : {e}")
 
         # --- 2. LISTE ET STATUT DES UTILISATEURS ---
         st.markdown("---")
@@ -58,7 +66,6 @@ def afficher_gestion_utilisateurs():
         
         users = db.query(User).all()
         if users:
-            # Tableau récapitulatif
             data_users = []
             for u in users:
                  liaison = "Aucune"
@@ -66,8 +73,9 @@ def afficher_gestion_utilisateurs():
                      prof = db.query(Enseignant).filter(Enseignant.id == u.entite_id).first()
                      liaison = f"Enseignant : {prof.nom} {prof.prenom}" if prof else "ID Inconnu"
                  elif u.role == "parent":
-                     if u.enfants_ids:
-                         ids = [int(i) for i in u.enfants_ids.split(",") if i.isdigit()]
+                     raw_enfants = getattr(u, 'enfants_ids', None)
+                     if raw_enfants:
+                         ids = [int(i) for i in raw_enfants.split(",") if i.isdigit()]
                          eleves_lies = db.query(Eleve).filter(Eleve.id.in_(ids)).all()
                          liaison = ", ".join([f"{e.nom} {e.prenom}" for e in eleves_lies]) if eleves_lies else "Aucun enfant"
                      elif u.entite_id:
@@ -83,7 +91,6 @@ def afficher_gestion_utilisateurs():
                      "Statut": "🟢 Actif / Enregistré"
                  })
             
-            import pandas as pd
             st.dataframe(pd.DataFrame(data_users), use_container_width=True)
 
             # --- 3. MODIFICATION / SUPPRESSION ---
@@ -116,8 +123,9 @@ def afficher_gestion_utilisateurs():
                         eleves = db.query(Eleve).all()
                         if eleves:
                             current_eleve_ids = []
-                            if target_user.enfants_ids:
-                                current_eleve_ids = [int(i) for i in target_user.enfants_ids.split(",") if i.isdigit()]
+                            raw_enfants = getattr(target_user, 'enfants_ids', None)
+                            if raw_enfants:
+                                current_eleve_ids = [int(i) for i in raw_enfants.split(",") if i.isdigit()]
                             elif target_user.entite_id:
                                 current_eleve_ids = [target_user.entite_id]
                                 
@@ -132,7 +140,9 @@ def afficher_gestion_utilisateurs():
                             )
                             
                             if st.button("💾 Enregistrer les modifications", key=f"save_enfants_{target_user.id}"):
-                                target_user.enfants_ids = ",".join([str(e.id) for e in selected_enfants]) if selected_enfants else None
+                                val_str = ",".join([str(e.id) for e in selected_enfants]) if selected_enfants else None
+                                if hasattr(target_user, 'enfants_ids'):
+                                    target_user.enfants_ids = val_str
                                 target_user.entite_id = selected_enfants[0].id if selected_enfants else None
                                 db.commit()
                                 st.success("Liaisons mises à jour avec succès !")
