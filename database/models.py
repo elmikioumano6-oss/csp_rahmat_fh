@@ -9,6 +9,7 @@ class User(Base):
     password = Column(String)
     role = Column(String)  # 'admin', 'prof', 'parent'
     entite_id = Column(Integer, nullable=True)  # ID de l'enseignant ou référence liée pour filtrer les accès
+    enfants_ids = Column(String, nullable=True)  # IDs des enfants pour les parents (stockés sous forme de texte ex: "1,3,5")
 
 class AnneeScolaire(Base):
     __tablename__ = 'annees_scolaires'
