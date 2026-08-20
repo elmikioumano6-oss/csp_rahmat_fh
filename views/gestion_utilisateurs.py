@@ -21,7 +21,7 @@ def afficher_gestion_utilisateurs():
                 if profs:
                     choix_prof = st.selectbox("Lier au profil Enseignant", profs, format_func=lambda x: f"{x.nom} {x.prenom} (Spécialité : {getattr(x, 'specialite', 'N/A')})", key="create_prof_link")
                     entite_id = choix_prof.id
-                    st.info("💡 Le professeur gère ses classes et ses matières directement dans son espace de saisie de notes.")
+                    st.info("💡 Le professeur accèdera aux modules de saisie et de suivi selon ses affectations.")
                 else:
                     st.warning("⚠️ Aucun enseignant trouvé. Veuillez d'abord en créer dans le menu 'Enseignants'.")
 
@@ -31,6 +31,7 @@ def afficher_gestion_utilisateurs():
                     choix_eleves = st.multiselect("Lier aux enfants (Plusieurs choix possibles)", eleves, format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})", key="create_parent_enfants")
                     if choix_eleves:
                         enfants_ids_str = ",".join([str(e.id) for e in choix_eleves])
+                        entite_id = choix_eleves[0].id  # Pour la rétrocompatibilité
                 else:
                     st.warning("⚠️ Aucun élève trouvé. Veuillez d'abord inscrire des élèves.")
 
@@ -70,7 +71,6 @@ def afficher_gestion_utilisateurs():
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # Modification du mot de passe
                     new_pwd = st.text_input("Nouveau mot de passe", type="password", key=f"pwd_mod_{target_user.id}")
                     if st.button("🔄 Mettre à jour le mot de passe", key=f"btn_pwd_{target_user.id}"):
                         if new_pwd:
@@ -81,7 +81,7 @@ def afficher_gestion_utilisateurs():
                         else:
                             st.warning("Veuillez entrer un mot de passe.")
                             
-                    # ASSOCIATION POUR PARENT (Multi-enfants)
+                    # ASSOCIATION PARENT (Multi-enfants)
                     if target_user.role == "parent":
                         st.markdown("---")
                         st.markdown("#### 🔗 Association Parent ➔ Élèves")
@@ -96,7 +96,7 @@ def afficher_gestion_utilisateurs():
                             default_eleves = [el for el in eleves if el.id in current_eleve_ids]
                             
                             selected_enfants = st.multiselect(
-                                "Modifier / Sélectionner les enfants de ce parent", 
+                                "Enfants rattachés à ce parent", 
                                 eleves, 
                                 default=default_eleves, 
                                 format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})", 
@@ -105,13 +105,14 @@ def afficher_gestion_utilisateurs():
                             
                             if st.button("💾 Enregistrer les enfants liés", key=f"save_enfants_{target_user.id}"):
                                 target_user.enfants_ids = ",".join([str(e.id) for e in selected_enfants]) if selected_enfants else None
+                                target_user.entite_id = selected_enfants[0].id if selected_enfants else None
                                 db.commit()
                                 st.success("Liaisons des enfants mises à jour avec succès !")
                                 st.rerun()
                         else:
-                            st.info("Aucun élève enregistré dans l'établissement.")
+                            st.info("Aucun élève enregistré.")
 
-                    # ASSOCIATION POUR PROFESSEUR
+                    # ASSOCIATION PROFESSEUR
                     elif target_user.role == "prof":
                         st.markdown("---")
                         st.markdown("#### 🔗 Association Professeur ➔ Fiche Enseignant")
@@ -135,7 +136,7 @@ def afficher_gestion_utilisateurs():
                             if st.button("💾 Enregistrer le lien Enseignant", key=f"save_prof_{target_user.id}"):
                                 target_user.entite_id = selected_prof.id
                                 db.commit()
-                                st.success(f"Compte lié avec succès à l'enseignant {selected_prof.nom} {selected_prof.prenom} !")
+                                st.success(f"Compte lié à l'enseignant {selected_prof.nom} {selected_prof.prenom} !")
                                 st.rerun()
                         else:
                             st.info("Aucun enseignant enregistré.")
