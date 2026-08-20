@@ -5,9 +5,10 @@ from database.db_config import Base
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
+    username = Column(String, unique=True, index=True)  # Nom d'utilisateur ou numéro de téléphone
     password = Column(String)
-    role = Column(String)  # admin, prof, parent
+    role = Column(String)  # 'admin', 'prof', 'parent'
+    entite_id = Column(Integer, nullable=True)  # ID de l'enseignant ou référence liée pour filtrer les accès
 
 class AnneeScolaire(Base):
     __tablename__ = 'annees_scolaires'
@@ -51,7 +52,7 @@ class Programme(Base):
     matiere_id = Column(Integer, ForeignKey('matieres.id'))
     volume_horaire_prevu = Column(Float, default=30.0)
     semestre = Column(Integer, default=1)
-    document_pdf = Column(String, nullable=True)  # <-- Ajout de la colonne manquante
+    document_pdf = Column(String, nullable=True)
     
     classe = relationship("Classe")
     matiere = relationship("Matiere")
