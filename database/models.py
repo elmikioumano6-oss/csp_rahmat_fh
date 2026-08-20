@@ -7,9 +7,10 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)  # Nom d'utilisateur ou numéro de téléphone
     password = Column(String)
-    role = Column(String)  # 'admin', 'prof', 'parent'
+    role = Column(String)  # 'admin', 'proviseur', 'prof', 'parent'
     entite_id = Column(Integer, nullable=True)  # ID de l'enseignant ou référence liée pour filtrer les accès
     enfants_ids = Column(String, nullable=True)  # IDs des enfants pour les parents (stockés sous forme de texte ex: "1,3,5")
+    is_active = Column(Boolean, default=True)   # Statut du compte (True = Actif, False = Bloqué/Déconnecté)
 
 class AnneeScolaire(Base):
     __tablename__ = 'annees_scolaires'
