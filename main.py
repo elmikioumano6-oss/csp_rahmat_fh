@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# PERSONNALISATION AVANCÉE (CSS, BOUTONS & SELECTBOX)
+# PERSONNALISATION AVANCÉE (CSS, BOUTONS, SELECTBOX & ŒIL PASSWORD)
 # ==========================================
 st.markdown("""
     <style>
@@ -64,6 +64,14 @@ st.markdown("""
     }
     div[data-baseweb="option"]:hover *, li[role="option"]:hover * {
         color: #ffffff !important;
+    }
+
+    /* --- CORRECTION DE L'ICÔNE DE L'ŒIL (MOT DE PASSE) --- */
+    div[data-baseweb="input"] button {
+        color: #ffffff !important;
+    }
+    div[data-baseweb="input"] svg {
+        fill: #ffffff !important;
     }
 
     /* Correction de la lisibilité et du style des boutons Streamlit */
