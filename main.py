@@ -36,11 +36,12 @@ st.markdown("""
         color: #FFFFFF !important;
     }
 
-    /* --- CORRECTION COMPLÈTE DES MENUS DÉROULANTS (SELECTBOX) --- */
-    div[data-baseweb="select"] {
+    /* --- CORRECTION TOTALE DES MENUS DÉROULANTS ET CONTENEURS (SELECTBOX & SELECTS) --- */
+    div[data-baseweb="select"], div[data-baseweb="base-input"], .stSelectbox > div > div {
         background-color: #1e293b !important;
         border: 1px solid #800020 !important;
         border-radius: 6px !important;
+        color: #ffffff !important;
     }
     div[data-baseweb="select"] div, div[data-baseweb="select"] span {
         color: #ffffff !important;
