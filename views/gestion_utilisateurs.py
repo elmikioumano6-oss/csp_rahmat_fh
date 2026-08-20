@@ -9,29 +9,29 @@ def afficher_gestion_utilisateurs():
     try:
         # Formulaire de création
         with st.expander("➕ Créer un nouvel utilisateur"):
-            with st.form("form_create_user"):
-                username = st.text_input("Nom d'utilisateur (Identifiant de connexion)")
+            with st.form("form_create_user", clear_on_submit=True):
+                username = st.text_input("Nom d'utilisateur (Identifiant)")
                 password = st.text_input("Mot de passe", type="password")
                 role = st.selectbox("Rôle", ["admin", "proviseur", "prof", "parent"])
                 
                 entite_id = None
                 
-                # Gestion sécurisée si les listes sont vides
+                # Logique dynamique selon le rôle
                 if role == "prof":
                     profs = db.query(Enseignant).all()
                     if profs:
                         choix_prof = st.selectbox("Choisir l'enseignant à lier", profs, format_func=lambda x: f"{x.nom} {x.prenom}")
                         entite_id = choix_prof.id
                     else:
-                        st.info("ℹ️ Aucun enseignant enregistré. Veuillez d'abord en ajouter dans l'onglet 'Enseignants'.")
+                        st.info("ℹ️ Aucun enseignant enregistré.")
                 
                 elif role == "parent":
                     eleves = db.query(Eleve).all()
                     if eleves:
-                        choix_eleve = st.selectbox("Lier au compte de l'élève (Parent)", eleves, format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})")
+                        choix_eleve = st.selectbox("Lier au compte de l'élève", eleves, format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})")
                         entite_id = choix_eleve.id
                     else:
-                        st.info("ℹ️ Aucun élève enregistré. Veuillez d'abord en inscrire dans l'onglet 'Inscription Élèves'.")
+                        st.info("ℹ️ Aucun élève enregistré.")
 
                 submitted = st.form_submit_button("Créer le compte")
                 if submitted:
@@ -56,7 +56,13 @@ def afficher_gestion_utilisateurs():
         utilisateurs = db.query(User).all()
         
         if utilisateurs:
-            data = [{"ID": u.id, "Utilisateur": u.username, "Rôle": u.role, "Lien Entité ID": u.entite_id} for u in utilisateurs]
+            # Formatage propre : on convertit en int pour enlever les .0000
+            data = [{
+                "ID": u.id, 
+                "Utilisateur": u.username, 
+                "Rôle": u.role, 
+                "Lien Entité ID": int(u.entite_id) if u.entite_id is not None else "-"
+            } for u in utilisateurs]
             st.table(data)
         else:
             st.info("Aucun compte utilisateur trouvé.")
