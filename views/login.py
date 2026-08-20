@@ -16,7 +16,7 @@ def afficher_login():
         /* Conteneur de défilement plus visible */
         .marquee-wrapper {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; pointer-events: none; opacity: 0.4; /* Visibilité augmentée */
+            z-index: 0; pointer-events: none; opacity: 0.4;
         }
         .marquee-line {
             display: flex; white-space: nowrap;
@@ -27,13 +27,13 @@ def afficher_login():
 
         /* Badges opaques pour une lisibilité totale */
         .mod-chip {
-            background-color: rgba(136, 19, 55, 0.9); /* Bordeaux solide */
-            border: 2px solid #f97316; /* Bordure Or visible */
+            background-color: rgba(136, 19, 55, 0.9);
+            border: 2px solid #f97316;
             padding: 10px 25px;
             border-radius: 50px;
             color: #ffffff;
-            font-weight: 800; /* Gras pour la lisibilité */
-            text-shadow: 1px 1px 4px rgba(0,0,0,0.5); /* Ombre sur le texte */
+            font-weight: 800;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -93,10 +93,10 @@ def afficher_login():
         st.markdown("<br><br><br>", unsafe_allow_html=True)
         with st.form("form_login"):
             st.markdown("<h2 style='text-align: center; font-weight: 700;'>Connexion</h2>", unsafe_allow_html=True)
-            identifiant = st.text_input("Identifiant ou Numéro de téléphone")
+            identifiant = st.text_input("Nom d'utilisateur")
             mot_de_passe = st.text_input("Mot de passe", type="password")
             
-            submitted = st.form_submit_button("Accéder au Système", use_container_width=True)
+            submitted = st.form_submit_button("Se connecter", use_container_width=True)
             
             if submitted:
                 if not identifiant or not mot_de_passe:
@@ -104,17 +104,20 @@ def afficher_login():
                 else:
                     db = SessionLocal()
                     try:
-                        # Recherche de l'utilisateur dans la base de données
+                        # Interrogation directe de la table User sur le Cloud
                         user = db.query(User).filter(User.username == identifiant).first()
                         
                         if user and user.password == mot_de_passe:
                             st.session_state['authenticated'] = True
-                            st.session_state['user_role'] = user.role  # 'admin', 'prof', ou 'parent'
+                            st.session_state['user_role'] = user.role  # 'admin', 'prof', 'parent'
                             st.session_state['user_entity_id'] = user.entite_id
                             st.session_state['username'] = user.username
+                            db.close()
                             st.rerun()
                         else:
-                            st.error("Identifiant ou mot de passe incorrect.")
+                            st.error("Identifiants incorrects.")
+                    except Exception as e:
+                        st.error(f"Erreur technique : {e}")
                     finally:
                         db.close()
 
