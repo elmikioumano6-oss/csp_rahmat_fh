@@ -38,11 +38,12 @@ st.markdown("""
 
     /* --- CORRECTION COMPLÈTE DES MENUS DÉROULANTS (SELECTBOX) --- */
     div[data-baseweb="select"] {
-        background-color: #ffffff !important;
+        background-color: #1e293b !important;
+        border: 1px solid #800020 !important;
         border-radius: 6px !important;
     }
     div[data-baseweb="select"] div, div[data-baseweb="select"] span {
-        color: #000000 !important;
+        color: #ffffff !important;
     }
 
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {
