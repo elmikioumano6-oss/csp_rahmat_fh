@@ -6,66 +6,61 @@ def afficher_gestion_utilisateurs():
     st.subheader("⚙️ Gestion des Comptes Utilisateurs")
     db = SessionLocal()
 
-    try:
-        # Formulaire de création
-        with st.expander("➕ Créer un nouvel utilisateur"):
-            with st.form("form_create_user", clear_on_submit=True):
-                username = st.text_input("Nom d'utilisateur (Identifiant)")
-                password = st.text_input("Mot de passe", type="password")
-                role = st.selectbox("Rôle", ["admin", "proviseur", "prof", "parent"])
-                
-                entite_id = None
-                
-                # Logique dynamique selon le rôle
-                if role == "prof":
-                    profs = db.query(Enseignant).all()
-                    if profs:
-                        choix_prof = st.selectbox("Choisir l'enseignant à lier", profs, format_func=lambda x: f"{x.nom} {x.prenom}")
-                        entite_id = choix_prof.id
-                    else:
-                        st.info("ℹ️ Aucun enseignant enregistré.")
-                
-                elif role == "parent":
-                    eleves = db.query(Eleve).all()
-                    if eleves:
-                        choix_eleve = st.selectbox("Lier au compte de l'élève", eleves, format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})")
-                        entite_id = choix_eleve.id
-                    else:
-                        st.info("ℹ️ Aucun élève enregistré.")
-
-                submitted = st.form_submit_button("Créer le compte")
-                if submitted:
-                    if not username or not password:
-                        st.error("Veuillez remplir tous les champs.")
-                    elif db.query(User).filter(User.username == username).first():
-                        st.error("Ce nom d'utilisateur existe déjà.")
-                    else:
-                        new_user = User(
-                            username=username, 
-                            password=password, 
-                            role=role, 
-                            entite_id=entite_id
-                        )
-                        db.add(new_user)
-                        db.commit()
-                        st.success(f"Compte '{username}' ({role}) créé avec succès !")
-
-        # Affichage de la liste des comptes existants
-        st.markdown("---")
-        st.markdown("### 📋 Liste des comptes créés")
-        utilisateurs = db.query(User).all()
-        
-        if utilisateurs:
-            # Formatage propre : on convertit en int pour enlever les .0000
-            data = [{
-                "ID": u.id, 
-                "Utilisateur": u.username, 
-                "Rôle": u.role, 
-                "Lien Entité ID": int(u.entite_id) if u.entite_id is not None else "-"
-            } for u in utilisateurs]
-            st.table(data)
-        else:
-            st.info("Aucun compte utilisateur trouvé.")
+    # --- PARTIE CRÉATION (Inchangée) ---
+    with st.expander("➕ Créer un nouvel utilisateur"):
+        with st.form("form_create_user", clear_on_submit=True):
+            username = st.text_input("Nom d'utilisateur")
+            password = st.text_input("Mot de passe", type="password")
+            role = st.selectbox("Rôle", ["admin", "proviseur", "prof", "parent"])
             
-    finally:
-        db.close()
+            entite_id = None
+            if role == "prof":
+                profs = db.query(Enseignant).all()
+                if profs:
+                    choix_prof = st.selectbox("Lier à l'enseignant", profs, format_func=lambda x: f"{x.nom} {x.prenom}")
+                    entite_id = choix_prof.id
+            elif role == "parent":
+                eleves = db.query(Eleve).all()
+                if eleves:
+                    choix_eleve = st.selectbox("Lier à l'élève", eleves, format_func=lambda x: f"{x.nom} {x.prenom}")
+                    entite_id = choix_eleve.id
+
+            if st.form_submit_button("Créer le compte"):
+                if db.query(User).filter(User.username == username).first():
+                    st.error("Ce nom existe déjà.")
+                else:
+                    db.add(User(username=username, password=password, role=role, entite_id=entite_id))
+                    db.commit()
+                    st.success("Compte créé !")
+                    st.rerun()
+
+    # --- PARTIE GESTION (Suppression / Réinitialisation) ---
+    st.markdown("---")
+    st.markdown("### 📋 Liste et Gestion des comptes")
+    
+    users = db.query(User).all()
+    for user in users:
+        col1, col2, col3, col4 = st.columns([2, 1, 1, 2])
+        col1.write(f"**{user.username}** ({user.role})")
+        
+        # Bouton Suppression
+        if col2.button("❌", key=f"del_{user.id}"):
+            if user.username == "admin":
+                st.error("Impossible de supprimer l'admin !")
+            else:
+                db.delete(user)
+                db.commit()
+                st.rerun()
+        
+        # Réinitialisation MDP
+        new_pass = col4.text_input("Nouv. MDP", type="password", key=f"pass_{user.id}")
+        if col3.button("🔄", key=f"reset_{user.id}"):
+            if new_pass:
+                user.password = new_pass
+                db.commit()
+                st.success(f"MDP mis à jour pour {user.username}")
+                st.rerun()
+            else:
+                st.warning("Entrez un MDP")
+
+    db.close()
