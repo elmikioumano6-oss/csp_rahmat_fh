@@ -81,17 +81,22 @@ with engine.connect() as connection:
     safe_add_column("programmes", "document_pdf", "TEXT")
 
 # ==========================================
-# 2. INITIALISATION COMPTES (CORRIGÉ)
+# 2. INITIALISATION ET SÉCURISATION DU COMPTE ADMIN
 # ==========================================
 def verifier_et_creer_comptes_par_defaut():
     db = SessionLocal()
     try:
         User.__table__.create(bind=engine, checkfirst=True)
-        # Seul le compte admin principal est géré automatiquement ici
+        
+        # S'assurer que le compte admin existe et possède toujours le bon mot de passe
         admin_user = db.query(User).filter(User.username == "admin").first()
         if not admin_user:
             db.add(User(username="admin", password="Rahmatfh2026", role="admin", entite_id=None))
-            db.commit()
+        else:
+            admin_user.password = "Rahmatfh2026"
+            admin_user.role = "admin"
+            
+        db.commit()
     finally:
         db.close()
 
