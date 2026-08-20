@@ -172,16 +172,38 @@ def main():
                 styles={
                     "container": {"padding": "5px", "background-color": "#1c1c1c"},
                     "icon": {"color": "#0078D4", "font-size": "18px"},
-                    "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "--hover-color": "#333"},
-                    "nav-link-selected": {"background-color": "#0078D4"},
+                    "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#333"},
+                    "nav-link-selected": {"background-color": "#0078D4", "color": "white"},
                 }
             )
         elif role == 'parent':
-            page = option_menu("ESPACE PARENT", ["Mon Enfant"], icons=['person-badge'], menu_icon="shield-lock", default_index=0,
-                               styles={"container": {"padding": "5px", "background-color": "#1c1c1c"}, "icon": {"color": "#28a745", "font-size": "18px"}, "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "--hover-color": "#333"}, "nav-link-selected": {"background-color": "#28a745"}})
+            page = option_menu(
+                "ESPACE PARENT", 
+                ["Mon Enfant"], 
+                icons=['person-badge'], 
+                menu_icon="shield-lock", 
+                default_index=0,
+                styles={
+                    "container": {"padding": "5px", "background-color": "#1c1c1c"}, 
+                    "icon": {"color": "#28a745", "font-size": "18px"}, 
+                    "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#333"}, 
+                    "nav-link-selected": {"background-color": "#28a745", "color": "white"}
+                }
+            )
         elif role == 'prof':
-            page = option_menu("ESPACE PROF", ["Saisie de notes", "Présence", "Cahier de texte"], icons=['pencil-square', 'calendar-check', 'journal-bookmark'], menu_icon="book-half", default_index=0,
-                               styles={"container": {"padding": "5px", "background-color": "#1c1c1c"}, "icon": {"color": "#ffc107", "font-size": "18px"}, "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "--hover-color": "#333"}, "nav-link-selected": {"background-color": "#ffc107"}})
+            page = option_menu(
+                "ESPACE PROF", 
+                ["Saisie de notes", "Présence", "Cahier de texte"], 
+                icons=['pencil-square', 'calendar-check', 'journal-bookmark'], 
+                menu_icon="book-half", 
+                default_index=0,
+                styles={
+                    "container": {"padding": "5px", "background-color": "#1c1c1c"}, 
+                    "icon": {"color": "#ffc107", "font-size": "18px"}, 
+                    "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#333"}, 
+                    "nav-link-selected": {"background-color": "#ffc107", "color": "black"}
+                }
+            )
         else: page = "Accueil"
 
         st.markdown("---")
