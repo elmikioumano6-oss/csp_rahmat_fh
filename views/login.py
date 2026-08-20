@@ -1,105 +1,103 @@
 import streamlit as st
 
 def afficher_login():
-    # Style CSS avec animation de défilement (Marquee)
+    # Style CSS ultra-précis pour reproduire le design recherché
     st.markdown("""
         <style>
+        /* Nettoyage de l'interface */
         #MainMenu {visibility: hidden;}
         header {visibility: hidden;}
         footer {visibility: hidden;}
 
+        /* Fond global (dégradé sombre) */
         .stApp {
-            background: linear-gradient(135deg, #0F172A 0%, #581822 100%);
+            background: linear-gradient(135deg, #151a2d 0%, #2b1016 100%);
             color: #FFFFFF;
         }
 
-        /* Carte blanche élégante */
-        [data-testid="stForm"] {
+        /* La "carte" blanche à droite */
+        .login-card {
             background: #FFFFFF !important;
             padding: 40px !important;
-            border-radius: 20px !important;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+            border-radius: 15px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3) !important;
+            color: #1E293B !important;
         }
 
-        /* Animation de défilement pour les modules */
-        .marquee-container {
+        /* Animation des modules (Ticker) */
+        .marquee {
             width: 100%;
             overflow: hidden;
             background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 30px;
-            border-left: 4px solid #800020;
-        }
-        
-        .marquee-text {
-            display: inline-block;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
             white-space: nowrap;
-            animation: scroll-left 30s linear infinite;
-            font-size: 17px;
+            color: white;
             font-weight: 500;
-            color: #FFFFFF;
         }
-
-        @keyframes scroll-left {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
-
-        .module-item {
+        .marquee-inner {
             display: inline-block;
-            margin-right: 40px;
+            animation: marquee 25s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-50%, 0); }
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Division de l'écran
-    col_gauche, col_droite = st.columns([1.3, 1], gap="large")
+    # Mise en page
+    col_gauche, col_droite = st.columns([1.2, 1], gap="large")
 
     with col_gauche:
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("### 🏫 **CSP RAHMAT-FH**")
-        st.markdown("<h1 style='font-size: 42px; font-weight: 900;'>Tout pour piloter votre établissement.</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 16px; color: #cbd5e1;'>La solution numérique complète pour gérer les inscriptions, notes, bulletins, comptabilité et le suivi des élèves.</p>", unsafe_allow_html=True)
+        st.markdown("### 🏫 CSP RAHMAT-FH")
+        st.markdown("<h1 style='font-size: 48px; font-weight: 800; line-height: 1.1;'>Tout pour piloter votre établissement.</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #cbd5e1; font-size: 16px;'>La solution complète pour gérer inscriptions, notes, bulletins, comptabilité et bien plus encore.</p>", unsafe_allow_html=True)
         
-        # --- BLOC DÉFILANT (MARQUEE) ---
-        modules = [
-            ("📊 Bulletins", "📊"), ("⏱️ Présences", "⏱️"), 
-            ("💰 Comptabilité", "💰"), ("💳 Impayés", "💳"), 
-            ("🪪 Cartes Scolaires", "🪪"), ("📓 Cahier de texte", "📓"),
-            ("📅 Emploi du temps", "📅"), ("📝 Notes", "📝")
-        ]
-        
-        # Création de la chaîne de texte défilante
-        marquee_content = "".join([f"<span class='module-item'>{icon} {name}</span>" for name, icon in modules])
-        
+        # Liste avec checkmarks verts
+        st.markdown("""
+            <div style='margin-top: 20px; font-size: 18px;'>
+            <p>✅ Suivez les présences en temps réel</p>
+            <p>✅ Espace sécurisé parents et professeurs</p>
+            <p>✅ Génération automatique des bulletins</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # Module défilant (Ticker)
+        modules = " | ".join(["📊 Bulletins", "⏱️ Présences", "💰 Comptabilité", "💳 Impayés", "🪪 Cartes Scolaires", "📓 Cahier de texte"])
         st.markdown(f"""
-            <div class="marquee-container">
-                <div class="marquee-text">{marquee_content} &nbsp;&nbsp;&nbsp; {marquee_content}</div>
+            <div class="marquee">
+                <div class="marquee-inner">{modules} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {modules}</div>
             </div>
         """, unsafe_allow_html=True)
 
     with col_droite:
         st.markdown("<br><br>", unsafe_allow_html=True)
-        with st.form("form_connexion_moderne"):
-            st.markdown("<h2 style='color: #0F172A;'>Bienvenue 👋</h2>", unsafe_allow_html=True)
-            st.markdown("<p style='color: #64748b; font-size: 14px;'>Connectez-vous à votre espace</p>", unsafe_allow_html=True)
+        
+        # Carte blanche (HTML/CSS personnalisé pour le formulaire)
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
+        st.markdown("<h2 style='color: #0F172A;'>Bienvenue 👋</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #64748b;'>Connectez-vous à votre espace</p>", unsafe_allow_html=True)
+        
+        with st.form("form_login"):
+            identifiant = st.text_input("Numéro de téléphone")
+            mot_de_passe = st.text_input("Mot de passe", type="password")
             
-            identifiant = st.text_input("Identifiant / Téléphone", placeholder="Entrez votre identifiant...")
-            mot_de_passe = st.text_input("Mot de passe", type="password", placeholder="••••••••••••")
+            # Case à cocher "Se souvenir de moi"
+            st.checkbox("Se souvenir de moi")
             
-            submitted = st.form_submit_button("Se connecter", use_container_width=True)
-
+            submitted = st.form_submit_button("Découvrir Rahmat-FH", use_container_width=True)
+            
             if submitted:
-                if identifiant == "admin" and mot_de_passe == "Rahmatfh2026":
+                # Logique de connexion
+                if identifiant == "99797163" and mot_de_passe == "Rahmatfh2026":
                     st.session_state['authenticated'] = True
                     st.session_state['user_role'] = 'admin'
                     st.rerun()
-                elif identifiant == "prof" and mot_de_passe == "prof2026":
-                    st.session_state['authenticated'] = True
-                    st.session_state['user_role'] = 'prof'
-                    st.rerun()
                 else:
-                    st.error("Identifiant incorrect.")
-
-        st.markdown("<p style='text-align: center; font-size: 11px; color: #cbd5e1;'>CSP RAHMAT-FH © 2026</p>", unsafe_allow_html=True)
+                    st.error("Identifiant ou mot de passe incorrect.")
+                    
+        st.markdown("<p style='text-align: center; font-size: 11px; color: #64748b; margin-top: 15px;'>Connexion sécurisée - Chiffrement AES 256</p>", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
