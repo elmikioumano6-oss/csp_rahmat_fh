@@ -88,9 +88,7 @@ Base.metadata.create_all(bind=engine)
 def verifier_et_creer_comptes_par_defaut():
     db = SessionLocal()
     try:
-        # S'assure explicitement que la table 'users' existe sur le Cloud
         User.__table__.create(bind=engine, checkfirst=True)
-        
         comptes = [
             {"username": "admin", "password": "Rahmatfh2026", "role": "admin", "entite_id": None},
             {"username": "prof", "password": "prof2026", "role": "prof", "entite_id": 1},
@@ -119,6 +117,15 @@ verifier_et_creer_comptes_par_defaut()
 # MIGRATIONS AUTOMATIQUES ET ROBUSTES
 # ==========================================
 with engine.connect() as connection:
+    # Table users (Migration automatique de la colonne entite_id)
+    try:
+        res = connection.execute(text("PRAGMA table_info(users);")).fetchall()
+        cols = [row[1] for row in res]
+        if "entite_id" not in cols: 
+            connection.execute(text("ALTER TABLE users ADD COLUMN entite_id INTEGER;"))
+            connection.commit()
+    except Exception: pass
+
     # Table notes
     try:
         res = connection.execute(text("PRAGMA table_info(notes);")).fetchall()
