@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# PERSONNALISATION AVANCÉE (CSS & BOUTONS)
+# PERSONNALISATION AVANCÉE (CSS, BOUTONS & SELECTBOX)
 # ==========================================
 st.markdown("""
     <style>
@@ -36,22 +36,33 @@ st.markdown("""
         color: #FFFFFF !important;
     }
 
-    /* Correction ciblée : Rendre le texte des menus déroulants noir sur fond blanc */
+    /* --- CORRECTION COMPLÈTE DES MENUS DÉROULANTS (SELECTBOX) --- */
+    div[data-baseweb="select"] {
+        background-color: #ffffff !important;
+        border-radius: 6px !important;
+    }
     div[data-baseweb="select"] div, div[data-baseweb="select"] span {
         color: #000000 !important;
     }
 
-    /* Harmoniser le menu déroulant des listes avec le thème sombre */
-    div[data-baseweb="popover"], div[data-baseweb="menu"], div[role="listbox"] {
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {
+        background-color: #1e293b !important;
+        border: 1px solid #800020 !important;
+        border-radius: 6px !important;
+    }
+
+    div[data-baseweb="option"], li[role="option"] {
         background-color: #1e293b !important;
         color: #ffffff !important;
     }
-    div[data-baseweb="option"] {
-        background-color: #1e293b !important;
+    div[data-baseweb="option"] *, li[role="option"] * {
         color: #ffffff !important;
     }
-    div[data-baseweb="option"]:hover {
+    div[data-baseweb="option"]:hover, li[role="option"]:hover {
         background-color: #800020 !important;
+        color: #ffffff !important;
+    }
+    div[data-baseweb="option"]:hover *, li[role="option"]:hover * {
         color: #ffffff !important;
     }
 
