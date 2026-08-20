@@ -87,24 +87,31 @@ Base.metadata.create_all(bind=engine)
 # ==========================================
 def verifier_et_creer_comptes_par_defaut():
     db = SessionLocal()
-    comptes = [
-        {"username": "admin", "password": "Rahmatfh2026", "role": "admin", "entite_id": None},
-        {"username": "prof", "password": "prof2026", "role": "prof", "entite_id": 1},
-        {"username": "parent", "password": "parent2026", "role": "parent", "entite_id": 1}
-    ]
-    
-    for data in comptes:
-        existe = db.query(User).filter(User.username == data["username"]).first()
-        if not existe:
-            nouvel_utilisateur = User(
-                username=data["username"],
-                password=data["password"],
-                role=data["role"],
-                entite_id=data["entite_id"]
-            )
-            db.add(nouvel_utilisateur)
-    db.commit()
-    db.close()
+    try:
+        # S'assure explicitement que la table 'users' existe sur le Cloud
+        User.__table__.create(bind=engine, checkfirst=True)
+        
+        comptes = [
+            {"username": "admin", "password": "Rahmatfh2026", "role": "admin", "entite_id": None},
+            {"username": "prof", "password": "prof2026", "role": "prof", "entite_id": 1},
+            {"username": "parent", "password": "parent2026", "role": "parent", "entite_id": 1}
+        ]
+        
+        for data in comptes:
+            existe = db.query(User).filter(User.username == data["username"]).first()
+            if not existe:
+                nouvel_utilisateur = User(
+                    username=data["username"],
+                    password=data["password"],
+                    role=data["role"],
+                    entite_id=data["entite_id"]
+                )
+                db.add(nouvel_utilisateur)
+        db.commit()
+    except Exception as e:
+        print(f"Erreur d'initialisation des comptes : {e}")
+    finally:
+        db.close()
 
 verifier_et_creer_comptes_par_defaut()
 
