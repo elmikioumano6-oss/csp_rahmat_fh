@@ -6,7 +6,7 @@ from database.db_config import engine, SessionLocal
 from database.models import Base, AnneeScolaire, Classe, Eleve, EcheancePaiement
 from views.login import afficher_login
 
-# Configuration de la page avec le logo de l'établissement dans l'onglet
+# Configuration de la page avec le logo officiel de l'établissement
 st.set_page_config(
     page_title="CSP RAHMAT-FH - Gestion Scolaire",
     page_icon="Logo CSP-RAHMAT-FH.png",
@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# PERSONNALISATION DU THÈME & BARRE DE DÉFILEMENT
+# PERSONNALISATION DU THÈME & BARRES DE DÉFILEMENT HAUTE VISIBILITÉ
 # ==========================================
 st.markdown("""
     <style>
@@ -43,21 +43,28 @@ st.markdown("""
     }
 
     /* ==========================================
-       BARRE DE DÉFILEMENT BIEN VISIBLE
+       BARRES DE DÉFILEMENT PROFESSIONNELLES ET VISIBLES
        ========================================== */
+    * {
+        scrollbar-width: auto !important;
+        scrollbar-color: #cbd5e1 #0b1329 !important;
+    }
+
     ::-webkit-scrollbar {
-        width: 12px;
+        width: 14px !important;
+        height: 14px !important;
     }
     ::-webkit-scrollbar-track {
-        background: #0F172A;
+        background: #0b1329 !important;
+        border-radius: 7px !important;
     }
     ::-webkit-scrollbar-thumb {
-        background: #800020;
-        border-radius: 6px;
-        border: 2px solid #0F172A;
+        background: #cbd5e1 !important; /* Gris argenté professionnel et très visible */
+        border-radius: 7px !important;
+        border: 3px solid #0b1329 !important;
     }
     ::-webkit-scrollbar-thumb:hover {
-        background: #a30028;
+        background: #ffffff !important; /* Blanc éclatant au survol pour un repérage parfait */
     }
     </style>
 """, unsafe_allow_html=True)
@@ -224,7 +231,7 @@ def main():
                 menu_icon="cast", default_index=0,
                 styles={
                     "container": {"padding": "5px", "background-color": "#0b1329"},
-                    "icon": {"color": "#ff4b4b", "font-size": "18px"},
+                    "icon": {"color": "#cbd5e1", "font-size": "18px"},
                     "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#331318"},
                     "nav-link-selected": {"background-color": "#800020", "color": "white"},
                 }
