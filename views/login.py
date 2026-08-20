@@ -1,4 +1,6 @@
 import streamlit as st
+from database.db_config import SessionLocal
+from database.models import User
 
 def afficher_login():
     # Style CSS optimisé pour une visibilité maximale (High Contrast)
@@ -85,18 +87,35 @@ def afficher_login():
         st.markdown("<br><br><br>", unsafe_allow_html=True)
         st.markdown("<h3 style='color: #f97316; letter-spacing: 2px; font-size: 14px;'>CSP RAHMAT-FH</h3>", unsafe_allow_html=True)
         st.markdown("<h1 style='font-size: 55px; font-weight: 900; line-height: 1;'>L'intelligence au service de l'éducation.</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 18px; color: #cbd5e1; margin-top: 20px;'>Gérez votre établissement avec puissance et sérénité. Une suite complète pour l'administration moderne.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 18px; color: #cbd5e1; margin-top: 20px;'>Gérez votre établissement avec puissance et sérénité. Une suite complète pour l'administration, les enseignants et les parents.</p>", unsafe_allow_html=True)
 
     with col2:
         st.markdown("<br><br><br>", unsafe_allow_html=True)
         with st.form("form_login"):
             st.markdown("<h2 style='text-align: center; font-weight: 700;'>Connexion</h2>", unsafe_allow_html=True)
-            identifiant = st.text_input("Numéro de téléphone")
+            identifiant = st.text_input("Identifiant ou Numéro de téléphone")
             mot_de_passe = st.text_input("Mot de passe", type="password")
             
-            if st.form_submit_button("Accéder au Système", use_container_width=True):
-                st.session_state['authenticated'] = True
-                st.session_state['user_role'] = 'admin'
-                st.rerun()
+            submitted = st.form_submit_button("Accéder au Système", use_container_width=True)
+            
+            if submitted:
+                if not identifiant or not mot_de_passe:
+                    st.error("Veuillez remplir tous les champs.")
+                else:
+                    db = SessionLocal()
+                    try:
+                        # Recherche de l'utilisateur dans la base de données
+                        user = db.query(User).filter(User.username == identifiant).first()
+                        
+                        if user and user.password == mot_de_passe:
+                            st.session_state['authenticated'] = True
+                            st.session_state['user_role'] = user.role  # 'admin', 'prof', ou 'parent'
+                            st.session_state['user_entity_id'] = user.entite_id
+                            st.session_state['username'] = user.username
+                            st.rerun()
+                        else:
+                            st.error("Identifiant ou mot de passe incorrect.")
+                    finally:
+                        db.close()
 
     st.markdown("</div>", unsafe_allow_html=True)
