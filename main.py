@@ -341,10 +341,19 @@ def main():
                 if data_impayes: st.dataframe(pd.DataFrame(data_impayes), use_container_width=True)
                 else: st.info(f"✅ Aucun impayé enregistré pour le cycle **{niveau_actif}**.")
             else: st.info(f"Page {page} en développement.")
+            
     elif role == 'parent':
         afficher_espace_parent()
+        
     elif role == 'prof':
-        afficher_notes(niveau_actif)
+        if page == "Saisie de notes":
+            afficher_notes(niveau_actif)
+        elif page == "Présence":
+            afficher_presence()
+        elif page == "Cahier de texte":
+            afficher_cahier_texte(niveau_actif)
+        else:
+            afficher_notes(niveau_actif)
 
     db.close()
 
