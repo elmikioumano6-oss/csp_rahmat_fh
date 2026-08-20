@@ -3,7 +3,7 @@ import pandas as pd
 from sqlalchemy import text
 from streamlit_option_menu import option_menu
 from database.db_config import engine, SessionLocal
-from database.models import Base, AnneeScolaire, Classe, Eleve, EcheancePaiement
+from database.models import Base, AnneeScolaire, Classe, Eleve, EcheancePaiement, User
 from views.login import afficher_login
 
 # Configuration de la page avec le logo officiel de l'établissement
@@ -81,6 +81,32 @@ st.markdown("""
 
 # Initialisation de la base de données
 Base.metadata.create_all(bind=engine)
+
+# ==========================================
+# INITIALISATION AUTOMATIQUE DES COMPTES DE TEST
+# ==========================================
+def verifier_et_creer_comptes_par_defaut():
+    db = SessionLocal()
+    comptes = [
+        {"username": "admin", "password": "Rahmatfh2026", "role": "admin", "entite_id": None},
+        {"username": "prof", "password": "prof2026", "role": "prof", "entite_id": 1},
+        {"username": "parent", "password": "parent2026", "role": "parent", "entite_id": 1}
+    ]
+    
+    for data in comptes:
+        existe = db.query(User).filter(User.username == data["username"]).first()
+        if not existe:
+            nouvel_utilisateur = User(
+                username=data["username"],
+                password=data["password"],
+                role=data["role"],
+                entite_id=data["entite_id"]
+            )
+            db.add(nouvel_utilisateur)
+    db.commit()
+    db.close()
+
+verifier_et_creer_comptes_par_defaut()
 
 # ==========================================
 # MIGRATIONS AUTOMATIQUES ET ROBUSTES
@@ -354,7 +380,7 @@ def main():
     elif role == 'parent':
         afficher_espace_parent()
     elif role == 'prof':
-        afficher_notes(niveau_actif) # ou la vue de saisie dédiée aux profs
+        afficher_notes(niveau_actif)
 
     db.close()
 
