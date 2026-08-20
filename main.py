@@ -14,14 +14,14 @@ st.set_page_config(
 )
 
 # ==========================================
-# PERSONNALISATION DU THÈME & BARRES DE DÉFILEMENT HAUTE VISIBILITÉ
+# PERSONNALISATION AVANCÉE (VISIBILITÉ MAXIMALE & TEXTES CLAIRS)
 # ==========================================
 st.markdown("""
     <style>
     /* Fond global de l'application : Dégradé Bleu Marine et Rouge Bordeaux */
     .stApp {
         background: linear-gradient(135deg, #0F172A 0%, #581822 100%);
-        color: #FFFFFF;
+        color: #FFFFFF !important;
     }
     
     /* Barre latérale (Sidebar) en Bleu Marine profond */
@@ -30,41 +30,51 @@ st.markdown("""
         border-right: 1px solid #800020;
     }
 
-    /* Harmonisation des titres en blanc éclatant */
-    h1, h2, h3, h4, h5, h6 {
+    /* Harmonisation absolue de tous les textes et titres en blanc lumineux */
+    h1, h2, h3, h4, h5, h6, p, span, label, div {
         color: #FFFFFF !important;
     }
 
-    /* Style des boîtes de succès / info pour s'intégrer au thème */
+    /* Visibilité parfaite des libellés de formulaires et champs */
+    .stTextInput label, .stSelectbox label, .stNumberInput label, .stDateInput label, .stMultiSelect label {
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+    }
+
+    /* Style des boîtes d'alerte / info pour un contraste parfait */
     div.stAlert {
-        background-color: rgba(15, 23, 42, 0.8) !important;
+        background-color: rgba(15, 23, 42, 0.9) !important;
         color: #FFFFFF !important;
         border: 1px solid #800020;
     }
 
     /* ==========================================
-       BARRES DE DÉFILEMENT PROFESSIONNELLES ET VISIBLES
+       BARRES DE DÉFILEMENT ULTRA-VISIBLES (DROITE ET GAUCHE)
        ========================================== */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+        overflow-y: auto !important;
+    }
+
     * {
         scrollbar-width: auto !important;
-        scrollbar-color: #cbd5e1 #0b1329 !important;
+        scrollbar-color: #ffffff #0b1329 !important;
     }
 
     ::-webkit-scrollbar {
-        width: 14px !important;
-        height: 14px !important;
+        width: 16px !important;
+        height: 16px !important;
+        display: block !important;
     }
     ::-webkit-scrollbar-track {
         background: #0b1329 !important;
-        border-radius: 7px !important;
     }
     ::-webkit-scrollbar-thumb {
-        background: #cbd5e1 !important; /* Gris argenté professionnel et très visible */
-        border-radius: 7px !important;
+        background: #ffffff !important; /* Blanc pur pour une visibilité totale à droite comme à gauche */
+        border-radius: 8px !important;
         border: 3px solid #0b1329 !important;
     }
     ::-webkit-scrollbar-thumb:hover {
-        background: #ffffff !important; /* Blanc éclatant au survol pour un repérage parfait */
+        background: #cbd5e1 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -155,7 +165,7 @@ with engine.connect() as connection:
     except Exception: pass
 
 # ==========================================
-# BLOC DE SÉCURITÉ
+# BLOC DE SÉCURITÉ (MUR DE SÉCURITÉ)
 # ==========================================
 if 'authenticated' not in st.session_state:
     st.session_state['authenticated'] = False
@@ -231,7 +241,7 @@ def main():
                 menu_icon="cast", default_index=0,
                 styles={
                     "container": {"padding": "5px", "background-color": "#0b1329"},
-                    "icon": {"color": "#cbd5e1", "font-size": "18px"},
+                    "icon": {"color": "#ffffff", "font-size": "18px"},
                     "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#331318"},
                     "nav-link-selected": {"background-color": "#800020", "color": "white"},
                 }
