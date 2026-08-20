@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# PERSONNALISATION AVANCÉE (CSS, BOUTONS, SELECTBOX & ŒIL PASSWORD)
+# PERSONNALISATION AVANCÉE (CSS, BOUTONS, SELECTBOX & INPUTS)
 # ==========================================
 st.markdown("""
     <style>
@@ -64,6 +64,11 @@ st.markdown("""
     }
     div[data-baseweb="option"]:hover *, li[role="option"]:hover * {
         color: #ffffff !important;
+    }
+
+    /* --- CORRECTION DE LA COULEUR DU TEXTE SAISI (INPUTS & TEXTAREAS) --- */
+    input, textarea, div[data-baseweb="input"] input {
+        color: #000000 !important;
     }
 
     /* --- CORRECTION DE L'ICÔNE DE L'ŒIL (MOT DE PASSE) --- */
