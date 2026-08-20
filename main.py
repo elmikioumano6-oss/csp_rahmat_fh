@@ -60,7 +60,6 @@ st.markdown("""
 Base.metadata.create_all(bind=engine)
 
 with engine.connect() as connection:
-    # Fonction utilitaire pour ajouter une colonne si elle n'existe pas
     def safe_add_column(table_name, column_name, column_definition):
         try:
             res = connection.execute(text(f"PRAGMA table_info({table_name});")).fetchall()
@@ -71,7 +70,6 @@ with engine.connect() as connection:
         except Exception:
             pass
 
-    # Application des migrations en toute sécurité
     safe_add_column("users", "entite_id", "INTEGER")
     safe_add_column("notes", "semestre", "INTEGER DEFAULT 1")
     safe_add_column("classes", "cycle", "TEXT")
@@ -83,22 +81,17 @@ with engine.connect() as connection:
     safe_add_column("programmes", "document_pdf", "TEXT")
 
 # ==========================================
-# 2. INITIALISATION COMPTES
+# 2. INITIALISATION COMPTES (CORRIGÉ)
 # ==========================================
 def verifier_et_creer_comptes_par_defaut():
     db = SessionLocal()
     try:
         User.__table__.create(bind=engine, checkfirst=True)
-        comptes = [
-            {"username": "admin", "password": "Rahmatfh2026", "role": "admin", "entite_id": None},
-            {"username": "prof", "password": "prof2026", "role": "prof", "entite_id": 1},
-            {"username": "parent", "password": "parent2026", "role": "parent", "entite_id": 1}
-        ]
-        for data in comptes:
-            user = db.query(User).filter(User.username == data["username"]).first()
-            if not user:
-                db.add(User(**data))
-        db.commit()
+        # Seul le compte admin principal est géré automatiquement ici
+        admin_user = db.query(User).filter(User.username == "admin").first()
+        if not admin_user:
+            db.add(User(username="admin", password="Rahmatfh2026", role="admin", entite_id=None))
+            db.commit()
     finally:
         db.close()
 
