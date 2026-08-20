@@ -9,21 +9,21 @@ def afficher_gestion_utilisateurs():
     try:
         # Formulaire de création
         with st.expander("➕ Créer un nouvel utilisateur"):
-            with st.form("form_create_user", clear_on_submit=True):
+            with st.form("form_create_user"):
                 username = st.text_input("Nom d'utilisateur (Identifiant de connexion)")
                 password = st.text_input("Mot de passe", type="password")
                 role = st.selectbox("Rôle", ["admin", "proviseur", "prof", "parent"])
                 
                 entite_id = None
                 
-                # Logique dynamique : on affiche les listes selon le rôle choisi
+                # Gestion sécurisée si les listes sont vides
                 if role == "prof":
                     profs = db.query(Enseignant).all()
                     if profs:
                         choix_prof = st.selectbox("Choisir l'enseignant à lier", profs, format_func=lambda x: f"{x.nom} {x.prenom}")
                         entite_id = choix_prof.id
                     else:
-                        st.warning("Aucun enseignant trouvé en base.")
+                        st.info("ℹ️ Aucun enseignant enregistré. Veuillez d'abord en ajouter dans l'onglet 'Enseignants'.")
                 
                 elif role == "parent":
                     eleves = db.query(Eleve).all()
@@ -31,7 +31,7 @@ def afficher_gestion_utilisateurs():
                         choix_eleve = st.selectbox("Lier au compte de l'élève (Parent)", eleves, format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})")
                         entite_id = choix_eleve.id
                     else:
-                        st.warning("Aucun élève trouvé en base.")
+                        st.info("ℹ️ Aucun élève enregistré. Veuillez d'abord en inscrire dans l'onglet 'Inscription Élèves'.")
 
                 submitted = st.form_submit_button("Créer le compte")
                 if submitted:
