@@ -7,35 +7,41 @@ def afficher_gestion_utilisateurs():
     db = SessionLocal()
 
     try:
-        # --- 1. FORMULAIRE DE CRÉATION ---
-        with st.expander("➕ Créer un nouvel utilisateur"):
-            with st.form("form_create_user", clear_on_submit=True):
-                username = st.text_input("Nom d'utilisateur")
-                password = st.text_input("Mot de passe", type="password")
-                role = st.selectbox("Rôle", ["admin", "proviseur", "prof", "parent"])
-                
-                entite_id = None
-                if role == "prof":
-                    profs = db.query(Enseignant).all()
-                    if profs:
-                        choix_prof = st.selectbox("Lier à l'enseignant", profs, format_func=lambda x: f"{x.nom} {x.prenom}")
-                        entite_id = choix_prof.id
-                elif role == "parent":
-                    eleves = db.query(Eleve).all()
-                    if eleves:
-                        choix_eleve = st.selectbox("Lier à l'élève", eleves, format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})")
-                        entite_id = choix_eleve.id
+        # --- 1. FORMULAIRE DE CRÉATION DYNAMIQUE (Sans st.form) ---
+        with st.expander("➕ Créer un nouvel utilisateur", expanded=True):
+            username = st.text_input("Nom d'utilisateur", key="input_new_username")
+            password = st.text_input("Mot de passe", type="password", key="input_new_password")
+            role = st.selectbox("Rôle", ["admin", "proviseur", "prof", "parent"], key="input_new_role")
+            
+            entite_id = None
+            
+            # Ce bloc s'actualise maintenant instantanément !
+            if role == "prof":
+                profs = db.query(Enseignant).all()
+                if profs:
+                    choix_prof = st.selectbox("Lier à l'enseignant", profs, format_func=lambda x: f"{x.nom} {x.prenom}", key="select_prof_link")
+                    entite_id = choix_prof.id
+                else:
+                    st.info("ℹ️ Aucun enseignant enregistré dans la base.")
+                    
+            elif role == "parent":
+                eleves = db.query(Eleve).all()
+                if eleves:
+                    choix_eleve = st.selectbox("Lier au compte de l'élève", eleves, format_func=lambda x: f"{x.nom} {x.prenom} (Mat: {x.matricule})", key="select_eleve_link")
+                    entite_id = choix_eleve.id
+                else:
+                    st.info("ℹ️ Aucun élève enregistré dans l'établissement.")
 
-                if st.form_submit_button("Créer le compte"):
-                    if not username or not password:
-                        st.error("Veuillez remplir tous les champs.")
-                    elif db.query(User).filter(User.username == username).first():
-                        st.error("Ce nom d'utilisateur existe déjà.")
-                    else:
-                        db.add(User(username=username, password=password, role=role, entite_id=entite_id))
-                        db.commit()
-                        st.success(f"Compte '{username}' créé avec succès !")
-                        st.rerun()
+            if st.button("Créer le compte", key="btn_submit_create"):
+                if not username or not password:
+                    st.error("Veuillez remplir tous les champs.")
+                elif db.query(User).filter(User.username == username).first():
+                    st.error("Ce nom d'utilisateur existe déjà.")
+                else:
+                    db.add(User(username=username, password=password, role=role, entite_id=entite_id))
+                    db.commit()
+                    st.success(f"Compte '{username}' ({role}) créé avec succès !")
+                    st.rerun()
 
         # --- 2. GESTION DES COMPTES EXISTANTS ---
         st.markdown("---")
@@ -44,7 +50,7 @@ def afficher_gestion_utilisateurs():
         users = db.query(User).all()
         if users:
             user_dict = {f"{u.username} (Rôle : {u.role})": u.id for u in users}
-            selected_choice = st.selectbox("Sélectionner un utilisateur à gérer", list(user_dict.keys()))
+            selected_choice = st.selectbox("Sélectionner un utilisateur à gérer", list(user_dict.keys()), key="select_manage_user")
             
             selected_id = user_dict[selected_choice]
             target_user = db.query(User).filter(User.id == selected_id).first()
