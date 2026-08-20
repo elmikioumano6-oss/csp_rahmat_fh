@@ -6,6 +6,40 @@ from database.db_config import engine, SessionLocal
 from database.models import Base, AnneeScolaire, Classe, Eleve, EcheancePaiement
 from views.login import afficher_login
 
+# Configuration de la page
+st.set_page_config(page_title="CSP RAHMAT-FH - Gestion Scolaire", layout="wide")
+
+# ==========================================
+# PERSONNALISATION DU THÈME (Bordeaux & Bleu Marine)
+# ==========================================
+st.markdown("""
+    <style>
+    /* Fond global de l'application : Dégradé Bleu Marine et Rouge Bordeaux */
+    .stApp {
+        background: linear-gradient(135deg, #0F172A 0%, #581822 100%);
+        color: #FFFFFF;
+    }
+    
+    /* Barre latérale (Sidebar) en Bleu Marine profond */
+    section[data-testid="stSidebar"] {
+        background-color: #0b1329;
+        border-right: 1px solid #800020;
+    }
+
+    /* Harmonisation des titres en blanc éclatant */
+    h1, h2, h3, h4, h5, h6 {
+        color: #FFFFFF !important;
+    }
+
+    /* Style des boîtes de succès / info pour s'intégrer au thème */
+    div.stAlert {
+        background-color: rgba(15, 23, 42, 0.8) !important;
+        color: #FFFFFF !important;
+        border: 1px solid #800020;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Initialisation de la base de données
 Base.metadata.create_all(bind=engine)
 
@@ -91,9 +125,6 @@ with engine.connect() as connection:
         connection.commit()
     except Exception: pass
 
-# Configuration de la page
-st.set_page_config(page_title="CSP RAHMAT-FH - Gestion Scolaire", layout="wide")
-
 # ==========================================
 # BLOC DE SÉCURITÉ
 # ==========================================
@@ -170,10 +201,10 @@ def main():
                 ],
                 menu_icon="cast", default_index=0,
                 styles={
-                    "container": {"padding": "5px", "background-color": "#1c1c1c"},
-                    "icon": {"color": "#0078D4", "font-size": "18px"},
-                    "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#333"},
-                    "nav-link-selected": {"background-color": "#0078D4", "color": "white"},
+                    "container": {"padding": "5px", "background-color": "#0b1329"},
+                    "icon": {"color": "#ff4b4b", "font-size": "18px"},
+                    "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#331318"},
+                    "nav-link-selected": {"background-color": "#800020", "color": "white"},
                 }
             )
         elif role == 'parent':
@@ -184,9 +215,9 @@ def main():
                 menu_icon="shield-lock", 
                 default_index=0,
                 styles={
-                    "container": {"padding": "5px", "background-color": "#1c1c1c"}, 
+                    "container": {"padding": "5px", "background-color": "#0b1329"}, 
                     "icon": {"color": "#28a745", "font-size": "18px"}, 
-                    "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#333"}, 
+                    "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#331318"}, 
                     "nav-link-selected": {"background-color": "#28a745", "color": "white"}
                 }
             )
@@ -198,9 +229,9 @@ def main():
                 menu_icon="book-half", 
                 default_index=0,
                 styles={
-                    "container": {"padding": "5px", "background-color": "#1c1c1c"}, 
+                    "container": {"padding": "5px", "background-color": "#0b1329"}, 
                     "icon": {"color": "#ffc107", "font-size": "18px"}, 
-                    "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#333"}, 
+                    "nav-link": {"font-size": "14px", "text-align": "left", "margin": "4px 0px", "color": "white", "--hover-color": "#331318"}, 
                     "nav-link-selected": {"background-color": "#ffc107", "color": "black"}
                 }
             )
