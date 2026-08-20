@@ -6,11 +6,15 @@ from database.db_config import engine, SessionLocal
 from database.models import Base, AnneeScolaire, Classe, Eleve, EcheancePaiement
 from views.login import afficher_login
 
-# Configuration de la page
-st.set_page_config(page_title="CSP RAHMAT-FH - Gestion Scolaire", layout="wide")
+# Configuration de la page avec le logo de l'établissement dans l'onglet
+st.set_page_config(
+    page_title="CSP RAHMAT-FH - Gestion Scolaire",
+    page_icon="Logo CSP-RAHMAT-FH.png",
+    layout="wide"
+)
 
 # ==========================================
-# PERSONNALISATION DU THÈME (Bordeaux & Bleu Marine)
+# PERSONNALISATION DU THÈME & BARRE DE DÉFILEMENT
 # ==========================================
 st.markdown("""
     <style>
@@ -36,6 +40,24 @@ st.markdown("""
         background-color: rgba(15, 23, 42, 0.8) !important;
         color: #FFFFFF !important;
         border: 1px solid #800020;
+    }
+
+    /* ==========================================
+       BARRE DE DÉFILEMENT BIEN VISIBLE
+       ========================================== */
+    ::-webkit-scrollbar {
+        width: 12px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #0F172A;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #800020;
+        border-radius: 6px;
+        border: 2px solid #0F172A;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #a30028;
     }
     </style>
 """, unsafe_allow_html=True)
