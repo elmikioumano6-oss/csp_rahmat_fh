@@ -171,6 +171,7 @@ if 'authenticated' not in st.session_state:
     st.session_state['authenticated'] = False
     st.session_state['user_role'] = 'admin'
     st.session_state['user_entity_id'] = None
+    st.session_state['username'] = 'Admin'
 
 if not st.session_state['authenticated']:
     afficher_login()
@@ -211,12 +212,18 @@ def main():
     db = SessionLocal()
     annee = db.query(AnneeScolaire).filter(AnneeScolaire.active == True).first()
     annee_libelle = annee.libelle if annee else "Non configurée"
+    
     role = st.session_state.get('user_role', 'admin')
+    username = st.session_state.get('username', 'Utilisateur')
 
-    # --- BARRE LATÉRALE : MENU INTÉGRAL ---
+    # --- BARRE LATÉRALE : MENU INTÉGRAL ET MESSAGE DE BIENVENUE ---
     with st.sidebar:
         st.markdown("### 🏫 CSP RAHMAT-FH")
-        st.caption(f"🔒 Connecté : **{role.upper()}**")
+        
+        # --- MESSAGE DE BIENVENUE PROFESSIONNEL ---
+        st.success(f"Bienvenue, **{username}**")
+        st.info(f"🔒 Espace : **{role.upper()}**")
+        
         st.markdown("---")
         
         if role == 'admin':
@@ -279,6 +286,8 @@ def main():
         st.markdown("---")
         if st.button("🚪 Déconnexion", use_container_width=True):
             st.session_state['authenticated'] = False
+            st.session_state['user_role'] = 'admin'
+            st.session_state['username'] = None
             st.rerun()
 
     # --- EN-TÊTE ---
@@ -342,6 +351,10 @@ def main():
                 if data_impayes: st.dataframe(pd.DataFrame(data_impayes), use_container_width=True)
                 else: st.info(f"✅ Aucun impayé enregistré pour le cycle **{niveau_actif}**.")
             else: st.info(f"Page {page} en développement.")
+    elif role == 'parent':
+        afficher_espace_parent()
+    elif role == 'prof':
+        afficher_notes(niveau_actif) # ou la vue de saisie dédiée aux profs
 
     db.close()
 
