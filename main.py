@@ -1,4 +1,6 @@
 from datetime import datetime
+import os
+from PIL import Image
 import bcrypt
 import pandas as pd
 from database.db_config import SessionLocal, engine
@@ -204,10 +206,18 @@ with engine.connect() as connection:
     except Exception:
         pass
 
-# Configuration de la page
+# ==========================================
+# CONFIGURATION DE LA PAGE AVEC LOGO
+# ==========================================
+# Gestion de l'icône de la page (Favicon)
+try:
+    icone_ecole = Image.open("Logo CSP-RAHMAT-FH.png")
+except Exception:
+    icone_ecole = "🏫"  # Icône par défaut si l'image n'est pas trouvée
+
 st.set_page_config(
     page_title="CSP RAHMAT-FH - Gestion d'Élite",
-    page_icon="🏫",
+    page_icon=icone_ecole,
     layout="wide",
     initial_sidebar_state="expanded",
 )
