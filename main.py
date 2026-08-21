@@ -209,7 +209,6 @@ with engine.connect() as connection:
 # ==========================================
 # CONFIGURATION DE LA PAGE AVEC LOGO
 # ==========================================
-# Gestion de l'icône de la page (Favicon)
 try:
     icone_ecole = Image.open("Logo CSP-RAHMAT-FH.png")
 except Exception:
@@ -238,6 +237,7 @@ if not st.session_state["authenticated"]:
 # IMPORTATION DES VUES
 # ==========================================
 from views.accueil import afficher_accueil
+from views.annee_scolaire import afficher_annee_scolaire
 from views.backup import afficher_backup
 from views.bulletins import afficher_bulletins
 from views.cahier_texte import afficher_cahier_texte
@@ -406,6 +406,8 @@ def main():
     if role == "admin":
         if page == "Accueil":
             afficher_accueil()
+        elif page == "Année scolaire":
+            afficher_annee_scolaire()
         elif page == "Classes & Tarifs":
             afficher_classes()
         elif page == "Matières & Coeffs":
