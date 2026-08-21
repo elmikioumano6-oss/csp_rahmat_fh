@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from database.db_config import SessionLocal
-from database.models import Enseignant, LogActivite
+from database.models import Enseignant, LogActivite, User, Classe, Matiere, Affectation
 
 def afficher_enseignants():
     st.subheader("👨‍🏫 Gestion des Enseignants")
@@ -42,6 +42,84 @@ def afficher_enseignants():
                 st.rerun()
             else:
                 st.warning("⚠️ Veuillez remplir au moins le nom et le prénom de l'enseignant.")
+
+    st.markdown("---")
+    
+    # --- ESPACE DE LIAISON ET D'AFFECTATION (NOUVEAU) ---
+    with st.expander("🔗 Lier un compte et Assigner des classes", expanded=False):
+        enseignants = db.query(Enseignant).all()
+        comptes_profs = db.query(User).filter(User.role == "prof").all()
+        classes = db.query(Classe).all()
+        matieres = db.query(Matiere).all()
+
+        if not enseignants or not comptes_profs:
+            st.warning("⚠️ Créez au moins un profil Enseignant et un Compte Utilisateur 'prof' pour utiliser cette section.")
+        else:
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write("**1. Lier au compte de connexion**")
+                ens_opts = {f"{e.nom} {e.prenom}": e.id for e in enseignants}
+                prof_choisi = st.selectbox("Sélectionner l'Enseignant", list(ens_opts.keys()), key="link_prof")
+                
+                cpt_opts = {u.username: u.id for u in comptes_profs}
+                cpt_choisi = st.selectbox("Lier au compte utilisateur (Login)", ["Aucun"] + list(cpt_opts.keys()), key="link_account")
+                
+                if st.button("Lier le compte"):
+                    ens_obj = db.query(Enseignant).filter(Enseignant.id == ens_opts[prof_choisi]).first()
+                    ens_obj.user_id = cpt_opts[cpt_choisi] if cpt_choisi != "Aucun" else None
+                    db.commit()
+                    st.success(f"✅ Compte '{cpt_choisi}' lié à {prof_choisi} !")
+                    st.rerun()
+
+            with col2:
+                st.write("**2. Assigner une Matière et une Classe**")
+                class_opts = {c.nom: c.id for c in classes}
+                mat_opts = {m.nom: m.id for m in matieres}
+                
+                # On réutilise le prof sélectionné dans la col1 pour l'affectation
+                st.write(f"Affectation pour : **{prof_choisi}**")
+                classe_choisie = st.selectbox("Classe", list(class_opts.keys()) if class_opts else ["Aucune"])
+                matiere_choisie = st.selectbox("Matière", list(mat_opts.keys()) if mat_opts else ["Aucune"])
+                
+                if st.button("Ajouter l'affectation"):
+                    if classe_choisie != "Aucune" and matiere_choisie != "Aucune":
+                        # Vérifier si l'affectation existe déjà
+                        existe = db.query(Affectation).filter(
+                            Affectation.enseignant_id == ens_opts[prof_choisi],
+                            Affectation.classe_id == class_opts[classe_choisie],
+                            Affectation.matiere_id == mat_opts[matiere_choisie]
+                        ).first()
+                        
+                        if existe:
+                            st.warning("⚠️ Cette affectation existe déjà.")
+                        else:
+                            nouvelle_affectation = Affectation(
+                                enseignant_id=ens_opts[prof_choisi],
+                                classe_id=class_opts[classe_choisie],
+                                matiere_id=mat_opts[matiere_choisie]
+                            )
+                            db.add(nouvelle_affectation)
+                            db.commit()
+                            st.success(f"✅ {prof_choisi} enseignera {matiere_choisie} en {classe_choisie}.")
+                            st.rerun()
+                    else:
+                        st.error("Veuillez créer des classes et des matières d'abord.")
+
+            # Afficher les affectations actuelles
+            st.write("---")
+            st.write("**Affectations enregistrées :**")
+            toutes_affectations = db.query(Affectation).all()
+            if toutes_affectations:
+                aff_data = [{
+                    "ID": a.id,
+                    "Enseignant": f"{a.enseignant.nom} {a.enseignant.prenom}" if a.enseignant else "N/A",
+                    "Classe": a.classe.nom if a.classe else "N/A",
+                    "Matière": a.matiere.nom if a.matiere else "N/A"
+                } for a in toutes_affectations]
+                st.dataframe(pd.DataFrame(aff_data), use_container_width=True)
+            else:
+                st.info("Aucune affectation enregistrée.")
 
     st.markdown("---")
     
@@ -87,11 +165,15 @@ def afficher_enseignants():
                 else:
                     if st.button("🗑️ Supprimer définitivement cet enseignant", type="primary", key="btn_suppr_enseignant"):
                         nom_complet = f"{e_obj.nom} {e_obj.prenom}"
+                        
+                        # Supprimer d'abord les affectations liées pour éviter les erreurs de clés étrangères
+                        db.query(Affectation).filter(Affectation.enseignant_id == e_obj.id).delete()
+                        
                         db.add(LogActivite(
                             date=datetime.now().strftime("%Y-%m-%d %H:%M"),
                             utilisateur=st.session_state.get('user_role', 'Admin'),
                             action="SUPPRESSION ENSEIGNANT",
-                            details=f"Suppression de l'enseignant ID {e_obj.id} ({nom_complet})"
+                            details=f"Suppression de l'enseignant ID {e_obj.id} ({nom_complet}) et de ses affectations."
                         ))
                         db.delete(e_obj)
                         db.commit()
@@ -111,7 +193,8 @@ def afficher_enseignants():
             "Nom": e.nom,
             "Prénom": e.prenom,
             "Spécialité": e.specialite or "N/A",
-            "Téléphone": e.telephone or "N/A"
+            "Téléphone": e.telephone or "N/A",
+            "Compte lié": e.user.username if e.user else "Non lié" # NOUVEAU
         } for e in tous_profs]
         st.dataframe(pd.DataFrame(data), use_container_width=True)
     else:

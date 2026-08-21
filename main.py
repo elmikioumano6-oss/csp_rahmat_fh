@@ -110,6 +110,12 @@ with engine.connect() as connection:
     except Exception:
         pass
 
+    try:
+        connection.execute(text("ALTER TABLE eleves ADD COLUMN parent_id INTEGER;"))
+        connection.commit()
+    except Exception:
+        pass
+
     # Table programmes (Migration automatique de la colonne document_pdf)
     try:
         res = connection.execute(
@@ -221,6 +227,7 @@ if not st.session_state["authenticated"]:
 # ==========================================
 # IMPORTATION DES VUES
 # ==========================================
+from views.accueil import afficher_accueil
 from views.backup import afficher_backup
 from views.bulletins import afficher_bulletins
 from views.cahier_texte import afficher_cahier_texte
@@ -229,6 +236,7 @@ from views.classes import afficher_classes
 from views.conseil_classe import afficher_conseil_classe
 from views.consultation_notes import afficher_consultation_notes
 from views.depenses import afficher_depenses
+from views.eleves import afficher_eleves
 from views.emploi_du_temps import afficher_emploi_du_temps
 from views.enseignants import afficher_enseignants
 from views.finances import afficher_finances
@@ -271,8 +279,13 @@ def main():
         )
 
         # Affichage de la date et l'heure en français
-        jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
-        mois = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+        jours = [
+            "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche",
+        ]
+        mois = [
+            "", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", 
+            "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+        ]
         now = datetime.now()
         date_str = f"{jours[now.weekday()]} {now.day} {mois[now.month]} {now.year}"
         heure_str = now.strftime("%H:%M")
@@ -280,8 +293,8 @@ def main():
         st.markdown(
             f"""
             <div style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); padding: 10px; border-radius: 10px; text-align: center; margin: 15px 0;">
-                <div style="font-size: 0.82rem; color: #CBD5E1; font-weight: 500;">📅 {date_str}</div>
-                <div style="font-size: 1.1rem; font-weight: 700; color: #FBBF24; margin-top: 4px; letter-spacing: 1px;">⏰ {heure_str}</div>
+                <div style="font-size: 0.85rem; color: #CBD5E1; font-weight: 600;">📅 {date_str}</div>
+                <div style="font-size: 1.15rem; font-weight: 700; color: #FBBF24; margin-top: 4px; letter-spacing: 1px;">⏰ {heure_str}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -292,37 +305,64 @@ def main():
             page = option_menu(
                 "NAVIGATION",
                 [
-                    "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
+                    "Accueil", "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
                     "Personnels et rôles", "Gestion Comptes", "Inscription Élèves", 
-                    "Import Photos en Masse", "Cartes Scolaires", "Saisie de notes", 
+                    "Import Photos en Masse", "Cartes Scolaires", "Espace Profs", 
                     "Consultations des notes", "Conseil de classe", "Bulletins", 
                     "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
-                    "Emploi du temps", "Cahier de texte", "Planification des évaluations", 
-                    "Présence", "Encaissement", "Soldes & Impayés", "Tableau Finances", 
-                    "Dépenses", "Rapports", "Journal d'activité", "Messages", "Tableau de bord"
+                    "Emploi du temps", "Planification des évaluations", "Encaissement", 
+                    "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
+                    "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord",
                 ],
                 icons=[
-                    "calendar-event", "building", "book", "person-badge", "shield-lock", "people-fill",
-                    "people", "folder-plus", "card-list", "pencil-square", "journal-text", "people-fill", 
-                    "file-earmark-text", "eye", "file-earmark-pdf", "graph-up-arrow", "calendar3", "journal-bookmark", 
-                    "calendar-check", "check2-square", "cash-coin", "wallet2", "graph-up", "receipt", 
-                    "file-bar-graph", "clock-history", "chat-dots", "speedometer"
+                    "house", "calendar-event", "building", "book", "person-badge", "shield-lock", "people-fill",
+                    "people", "folder-plus", "card-list", "book-half", "journal-text", "people-fill", 
+                    "file-earmark-text", "eye", "file-earmark-pdf", "graph-up-arrow", "calendar3", 
+                    "calendar-check", "cash-coin", "wallet2", "graph-up", "receipt", "file-bar-graph", 
+                    "clock-history", "chat-dots", "person-badge", "speedometer",
                 ],
                 menu_icon="cast", default_index=0,
                 styles={
                     "container": {"padding": "5px", "background-color": "#0F172A"},
                     "icon": {"color": "#D97706", "font-size": "16px"},
-                    "nav-link": {"font-size": "13px", "text-align": "left", "margin": "3px 0px", "color": "#E2E8F0", "--hover-color": "#1E293B"},
+                    "nav-link": {
+                        "font-size": "13px", "text-align": "left", "margin": "3px 0px", 
+                        "color": "#E2E8F0", "--hover-color": "#1E293B",
+                    },
                     "nav-link-selected": {"background-color": "#D97706"},
-                }
+                },
             )
         elif role == "parent":
-            page = option_menu("ESPACE PARENT", ["Mon Enfant"], icons=["person-badge"], menu_icon="shield-lock", default_index=0,
-                               styles={"container": {"padding": "5px", "background-color": "#0F172A"}, "icon": {"color": "#10B981", "font-size": "16px"}, "nav-link": {"font-size": "13px", "text-align": "left", "margin": "3px 0px", "color": "#E2E8F0", "--hover-color": "#1E293B"}, "nav-link-selected": {"background-color": "#10B981"}})
+            page = option_menu(
+                "ESPACE PARENT", ["Mon Enfant"], icons=["person-badge"], 
+                menu_icon="shield-lock", default_index=0,
+                styles={
+                    "container": {"padding": "5px", "background-color": "#0F172A"},
+                    "icon": {"color": "#10B981", "font-size": "16px"},
+                    "nav-link": {
+                        "font-size": "13px", "text-align": "left", "margin": "3px 0px", 
+                        "color": "#E2E8F0", "--hover-color": "#1E293B",
+                    },
+                    "nav-link-selected": {"background-color": "#10B981"},
+                },
+            )
         elif role == "prof":
-            page = option_menu("ESPACE PROF", ["Saisie de notes", "Présence", "Cahier de texte"], icons=["pencil-square", "calendar-check", "journal-bookmark"], menu_icon="book-half", default_index=0,
-                               styles={"container": {"padding": "5px", "background-color": "#0F172A"}, "icon": {"color": "#F59E0B", "font-size": "16px"}, "nav-link": {"font-size": "13px", "text-align": "left", "margin": "3px 0px", "color": "#E2E8F0", "--hover-color": "#1E293B"}, "nav-link-selected": {"background-color": "#F59E0B"}})
-        else: page = "Accueil"
+            page = option_menu(
+                "ESPACE PROF", ["Saisie de notes", "Présence", "Cahier de texte"], 
+                icons=["pencil-square", "calendar-check", "journal-bookmark"], 
+                menu_icon="book-half", default_index=0,
+                styles={
+                    "container": {"padding": "5px", "background-color": "#0F172A"},
+                    "icon": {"color": "#F59E0B", "font-size": "16px"},
+                    "nav-link": {
+                        "font-size": "13px", "text-align": "left", "margin": "3px 0px", 
+                        "color": "#E2E8F0", "--hover-color": "#1E293B",
+                    },
+                    "nav-link-selected": {"background-color": "#F59E0B"},
+                },
+            )
+        else:
+            page = "Accueil"
 
         st.markdown("---")
         if st.button("🚪 Déconnexion", use_container_width=True):
@@ -346,11 +386,88 @@ def main():
         unsafe_allow_html=True,
     )
 
-    niveau_actif = st.selectbox("🎯 Cycle Actif :", ["Primaire", "Collège", "Lycée"], index=1)
-    if role == "admin": st.markdown("---")
+    niveau_actif = st.selectbox(
+        "🎯 Cycle Actif :", ["Primaire", "Collège", "Lycée"], index=1
+    )
+    if role == "admin":
+        st.markdown("---")
 
     # --- ROUTAGE ---
-    # ... (le reste de votre logique de routage inchangée)
-    # [Assurez-vous de garder tout le bloc if/elif de routage ici comme avant]
-    
-    # ... (fin du fichier main)
+    if role == "admin":
+        if page == "Accueil":
+            afficher_accueil()
+        elif page == "Classes & Tarifs":
+            afficher_classes()
+        elif page == "Matières & Coeffs":
+            afficher_matieres()
+        elif page == "Enseignants":
+            afficher_enseignants()
+        elif page == "Personnels et rôles":
+            afficher_personnels(niveau_actif)
+        elif page == "Gestion Comptes":
+            afficher_gestion_utilisateurs()
+        elif page == "Inscription Élèves":
+            afficher_eleves(niveau_actif)
+        elif page == "Import Photos en Masse":
+            afficher_import_photos_masse(niveau_actif)
+        elif page == "Cartes Scolaires":
+            afficher_cartes_scolaires(niveau_actif)
+        elif page == "Espace Profs":
+            st.subheader("👨‍🏫 Espace Enseignants (Supervision Admin)")
+            tab_p1, tab_p2, tab_p3 = st.tabs(["Saisie de notes", "Présence", "Cahier de texte"])
+            with tab_p1:
+                afficher_notes(niveau_actif)
+            with tab_p2:
+                afficher_presence()
+            with tab_p3:
+                afficher_cahier_texte(niveau_actif)
+        elif page == "Consultations des notes":
+            afficher_consultation_notes(niveau_actif)
+        elif page == "Conseil de classe":
+            afficher_conseil_classe(niveau_actif)
+        elif page == "Bulletins":
+            afficher_bulletins(niveau_actif)
+        elif page == "Supervision cahier":
+            afficher_supervision_cahier(niveau_actif)
+        elif page == "Import Programmes PDF":
+            afficher_upload_programmes(niveau_actif)
+        elif page == "Suivi des Programmes":
+            afficher_supervision_progression(niveau_actif)
+        elif page == "Emploi du temps":
+            afficher_emploi_du_temps(niveau_actif)
+        elif page == "Planification des évaluations":
+            afficher_planification(niveau_actif)
+        elif page == "Encaissement":
+            afficher_finances(niveau_actif)
+        elif page == "Tableau Finances":
+            afficher_tableau_finances(niveau_actif)
+        elif page == "Dépenses":
+            afficher_depenses(niveau_actif)
+        elif page == "Rapports":
+            afficher_rapports(niveau_actif)
+        elif page == "Journal d'activité":
+            afficher_journal_activite(niveau_actif)
+        elif page == "Messages":
+            afficher_messages(niveau_actif)
+        elif page == "Espace Parent":
+            afficher_espace_parent()
+        elif page == "Tableau de bord":
+            afficher_backup()
+
+    elif role == "parent":
+        if page == "Mon Enfant":
+            afficher_espace_parent()
+
+    elif role == "prof":
+        if page == "Saisie de notes":
+            afficher_notes(niveau_actif)
+        elif page == "Présence":
+            afficher_presence()
+        elif page == "Cahier de texte":
+            afficher_cahier_texte(niveau_actif)
+
+    db.close()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,106 +1,131 @@
-import streamlit as st
-import pandas as pd
+from datetime import datetime
 from database.db_config import SessionLocal
-from database.models import Eleve, Classe, Note, Matiere
+from database.models import Classe, Eleve, Matiere, Note
+import pandas as pd
+import streamlit as st
 
-def afficher_consultation_notes(niveau_actif=None):
-    st.subheader("📖 Consultation des Notes et Relevés")
-    
+
+def afficher_consultation_notes(niveau_actif):
+    st.subheader(f"📖 Consultation des Notes et Relevés - {niveau_actif}")
+
     db = SessionLocal()
-    
-    # --- FILTRES ---
-    classes = db.query(Classe).all()
+
+    # 1. Sélectionner la classe du cycle actif
+    classes = db.query(Classe).filter(Classe.cycle == niveau_actif).all()
     if not classes:
-        st.warning("⚠️ Aucune classe enregistrée.")
+        st.warning(f"⚠️ Aucune classe trouvée pour le cycle {niveau_actif}.")
         db.close()
         return
-        
-    col1, col2 = st.columns(2)
+
     options_classes = {c.nom: c.id for c in classes}
-    classe_nom = col1.selectbox("Sélectionner la classe", list(options_classes.keys()), key="consult_classe")
-    classe_id = options_classes[classe_nom]
-    
-    semestre_choisi = col2.selectbox("Sélectionner le Semestre", ["1er Semestre", "2ème Semestre"], key="consult_semestre")
-    sem_num = 1 if semestre_choisi == "1er Semestre" else 2
-    
-    eleves = db.query(Eleve).filter(Eleve.classe_id == classe_id).all()
-    if not eleves:
-        st.info("Aucun élève dans cette classe.")
-        db.close()
-        return
-        
-    options_eleves = {f"{e.nom} {e.prenom} (Matricule: {e.matricule})": e.id for e in eleves}
-    eleve_choisi_str = st.selectbox("Sélectionner l'élève", list(options_eleves.keys()), key="consult_eleve")
-    eleve_id = options_eleves[eleve_choisi_str]
-    
-    eleve = db.query(Eleve).filter(Eleve.id == eleve_id).first()
-    matieres = db.query(Matiere).all()
-    
-    if st.button("Afficher le Relevé"):
-        st.markdown("---")
-        st.markdown(f"### 📋 Relevé de notes - **{eleve.nom} {eleve.prenom}** ({semestre_choisi})")
-        
-        data = []
-        total_points = 0
-        total_coeffs = 0
-        
-        for m in matieres:
-            n = db.query(Note).filter(
-                Note.eleve_id == eleve.id, 
-                Note.matiere_id == m.id, 
-                Note.semestre == sem_num
-            ).first()
-            
-            n_cl = n.note_classe if n and n.note_classe is not None else 0.0
-            n_co = n.note_compo if n and n.note_compo is not None else 0.0
-            coef = getattr(m, 'coefficient', 1) or 1
-            
-            # Calcul de la moyenne matière
-            moy_mat = (n_cl + (n_co * 2)) / 3 if (n and n.note_classe is not None and n.note_compo is not None) else (n_cl or n_co)
-            moyen_coef = moy_mat * coef
-            
-            total_points += moyen_coef
-            total_coeffs += coef
-            
-            app_mat = "Bien" if moy_mat >= 12 else ("Assez Bien" if moy_mat >= 10 else "Faible")
-            
-            data.append({
-                "Matière": m.nom,
-                "Note Classe /20": n_cl,
-                "Note Compo /20": n_co,
-                "Coef": coef,
-                "Moyenne": round(moy_mat, 2),
-                "Total Pondéré": round(moyen_coef, 1),
-                "Appréciation": app_mat
-            })
-            
-        if data:
-            df = pd.DataFrame(data)
-            
-            # Style du DataFrame pour une meilleure lecture
-            st.dataframe(
-                df.style.format({"Moyenne": "{:.2f}", "Total Pondéré": "{:.1f}"})
-                  .background_gradient(subset=["Moyenne"], cmap="RdYlGn", vmin=0, vmax=20),
-                use_container_width=True
+    col_f1, col_f2 = st.columns(2)
+
+    with col_f1:
+        classe_nom = st.selectbox(
+            "Sélectionner la classe", list(options_classes.keys())
+        )
+        classe_id = options_classes[classe_nom]
+
+    with col_f2:
+        semestre = st.selectbox("Sélectionner le Semestre", [1, 2])
+
+    st.markdown("---")
+
+    # 2. Options avancées de filtrage (Élève et Matière)
+    col_f3, col_f4 = st.columns(2)
+
+    with col_f3:
+        eleves = db.query(Eleve).filter(Eleve.classe_id == classe_id).all()
+        # Option pour inclure toute la classe
+        options_eleves = {"👥 Tous les élèves (Classe entière)": 0}
+        for e in eleves:
+            options_eleves[f"{e.nom} {e.prenom} (Matricule: {e.matricule})"] = (
+                e.id
             )
-            
-            moyenne_generale = round(total_points / total_coeffs, 2) if total_coeffs > 0 else 0.0
-            
-            # Affichage des métriques
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Moyenne Générale", f"{moyenne_generale} / 20")
-            m2.metric("Total Points", round(total_points, 1))
-            m3.metric("Total Coefficients", total_coeffs)
-            
-            # Export CSV
-            csv = df.to_csv(index=False).encode('utf-8')
+
+        eleve_label = st.selectbox(
+            "Sélectionner l'élève ou la classe entière",
+            list(options_eleves.keys()),
+        )
+        eleve_id = options_eleves[eleve_label]
+
+    with col_f4:
+        matieres = db.query(Matiere).all()
+        options_matieres = {"📚 Toutes les matières": 0}
+        for m in matieres:
+            options_matieres[m.nom] = m.id
+
+        matiere_label = st.selectbox(
+            "Sélectionner la matière (ou toutes)",
+            list(options_matieres.keys()),
+        )
+        matiere_id = options_matieres[matiere_label]
+
+    st.markdown("---")
+
+    if st.button("Afficher le Relevé", type="primary", use_container_width=True):
+        # Construction de la requête selon les filtres choisis
+        query = (
+            db.query(Note)
+            .join(Eleve)
+            .filter(Eleve.classe_id == classe_id, Note.semestre == semestre)
+        )
+
+        # Si un élève spécifique est choisi
+        if eleve_id != 0:
+            query = query.filter(Note.eleve_id == eleve_id)
+
+        # Si une matière spécifique est choisie
+        if matiere_id != 0:
+            query = query.filter(Note.matiere_id == matiere_id)
+
+        notes_resultats = query.all()
+
+        if notes_resultats:
+            data = []
+            for n in notes_resultats:
+                nom_eleve = (
+                    f"{n.eleve.nom} {n.eleve.prenom}"
+                    if n.eleve
+                    else "Inconnu"
+                )
+                matricule_eleve = n.eleve.matricule if n.eleve else "-"
+                nom_matiere = n.matiere.nom if n.matiere else "-"
+
+                # Calcul de la moyenne de la ligne si besoin (Classe + Compo par exemple)
+                nc = float(n.note_classe or 0.0)
+                nco = float(n.note_compo or 0.0)
+                # Formule standard pondérée (ex: (Classe*1 + Compo*2)/3 ou moyenne simple selon votre barème)
+                moyenne_matiere = round((nc + nco * 2) / 3, 2)
+
+                data.append({
+                    "Matricule": matricule_eleve,
+                    "Élève": nom_eleve,
+                    "Matière": nom_matiere,
+                    "Note Classe": nc,
+                    "Note Compo": nco,
+                    "Moyenne": moyenne_matiere,
+                    "Semestre": f"Semestre {n.semestre}",
+                })
+
+            df = pd.DataFrame(data)
+
+            st.success(
+                f"📊 Relevé généré avec succès ({len(df)} enregistrement(s) trouvé(s))."
+            )
+            st.dataframe(df, use_container_width=True, hide_index=True)
+
+            # Bouton de téléchargement CSV pour impression ou sauvegarde
+            csv_data = df.to_csv(index=False).encode("utf-8")
             st.download_button(
                 label="📥 Télécharger ce relevé (CSV)",
-                data=csv,
-                file_name=f"Releve_{eleve.nom}_{eleve.prenom}_{semestre_choisi}.csv",
-                mime="text/csv"
+                data=csv_data,
+                file_name=f"releve_classe_{classe_nom}_semestre_{semestre}.csv",
+                mime="text/csv",
             )
         else:
-            st.warning("Aucune note trouvée pour cet élève.")
+            st.info(
+                "ℹ️ Aucun résultat trouvé pour les critères sélectionnés."
+            )
 
     db.close()
