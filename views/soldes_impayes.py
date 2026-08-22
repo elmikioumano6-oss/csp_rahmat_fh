@@ -3,32 +3,41 @@ import pandas as pd
 from database.db_config import SessionLocal
 from database.models import Eleve, Classe, EcheancePaiement
 
+@st.cache_data(ttl=300)
+def charger_donnees_impayes(niveau_actif):
+    db = SessionLocal()
+    try:
+        # Récupérer les élèves du cycle avec leur classe et leurs paiements
+        eleves = db.query(Eleve).join(Classe).filter(Classe.cycle == niveau_actif).all()
+        
+        data_impayes = []
+        
+        for eleve in eleves:
+            # Calculer le montant total dû pour l'élève (via ses échéances)
+            echeances = db.query(EcheancePaiement).filter(EcheancePaiement.eleve_id == eleve.id).all()
+            total_du = sum(e.montant_total for e in echeances)
+            total_paye = sum(e.montant_paye for e in echeances)
+            reste_a_payer = total_du - total_paye
+            
+            if reste_a_payer > 0:
+                data_impayes.append({
+                    "Matricule": eleve.matricule,
+                    "Nom": eleve.nom,
+                    "Prénom": eleve.prenom,
+                    "Classe": eleve.classe.nom if eleve.classe else "N/A",
+                    "Total Dû (FCFA)": total_du,
+                    "Déjà Payé (FCFA)": total_paye,
+                    "Reste à Payer (FCFA)": reste_a_payer
+                })
+        return data_impayes
+    finally:
+        db.close()
+
 def afficher_soldes_impayes(niveau_actif):
     st.subheader(f"⚠️ Soldes & Impayés - {niveau_actif}")
-    db = SessionLocal()
 
-    # Récupérer les élèves du cycle avec leur classe et leurs paiements
-    eleves = db.query(Eleve).join(Classe).filter(Classe.cycle == niveau_actif).all()
-    
-    data_impayes = []
-    
-    for eleve in eleves:
-        # Calculer le montant total dû pour l'élève (via ses échéances)
-        echeances = db.query(EcheancePaiement).filter(EcheancePaiement.eleve_id == eleve.id).all()
-        total_du = sum(e.montant_total for e in echeances)
-        total_paye = sum(e.montant_paye for e in echeances)
-        reste_a_payer = total_du - total_paye
-        
-        if reste_a_payer > 0:
-            data_impayes.append({
-                "Matricule": eleve.matricule,
-                "Nom": eleve.nom,
-                "Prénom": eleve.prenom,
-                "Classe": eleve.classe.nom if eleve.classe else "N/A",
-                "Total Dû (FCFA)": total_du,
-                "Déjà Payé (FCFA)": total_paye,
-                "Reste à Payer (FCFA)": reste_a_payer
-            })
+    # Récupération via les données cachées pour une vitesse maximale
+    data_impayes = charger_donnees_impayes(niveau_actif)
 
     if not data_impayes:
         st.success("✅ Aucun impayé détecté pour ce cycle !")
@@ -55,5 +64,3 @@ def afficher_soldes_impayes(niveau_actif):
             file_name=f"impayes_{niveau_actif}_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
             mime="text/csv"
         )
-
-    db.close()
