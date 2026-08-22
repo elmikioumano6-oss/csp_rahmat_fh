@@ -226,12 +226,16 @@ st.set_page_config(
 )
 
 # ==========================================
-# BLOC DE SÉCURITÉ
+# BLOC DE SÉCURITÉ PERSISTANT
 # ==========================================
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
     st.session_state["user_role"] = "admin"
     st.session_state["user_entity_id"] = None
+
+# Vérification du témoin de session dans l'URL pour persister après F5
+if st.query_params.get("logged_in") == "true":
+    st.session_state["authenticated"] = True
 
 if not st.session_state["authenticated"]:
     afficher_login()
@@ -384,6 +388,7 @@ def main():
         st.markdown("---")
         if st.button("🚪 Déconnexion", use_container_width=True):
             st.session_state["authenticated"] = False
+            st.query_params.clear()  # Efface le témoin de l'URL pour bloquer l'accès
             st.rerun()
 
     # --- EN-TÊTE SUPÉRIEUR ÉLÉGANT ---

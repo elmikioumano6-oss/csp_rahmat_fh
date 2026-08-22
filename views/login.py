@@ -44,6 +44,10 @@ def afficher_login():
                             st.session_state['authenticated'] = True
                             st.session_state['user_role'] = user.role
                             st.session_state['user_entity_id'] = user.id
+                            
+                            # Enregistrement du témoin persistant dans l'URL
+                            st.query_params["logged_in"] = "true"
+                            
                             st.success("Connexion réussie ! Redirection...")
                             st.rerun()
                         else:
