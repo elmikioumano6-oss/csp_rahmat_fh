@@ -388,7 +388,7 @@ def main():
         st.markdown("---")
         if st.button("🚪 Déconnexion", use_container_width=True):
             st.session_state["authenticated"] = False
-            st.query_params.clear()  # Efface le témoin de l'URL pour bloquer l'accès
+            st.query_params.clear() 
             st.rerun()
 
     # --- EN-TÊTE SUPÉRIEUR ÉLÉGANT ---
