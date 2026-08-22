@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from database.db_config import SessionLocal
-from database.models import Eleve, Classe, EcheancePaiement, PaiementDetail
+from database.models import Eleve, Classe, EcheancePaiement
 
 def afficher_soldes_impayes(niveau_actif):
     st.subheader(f"⚠️ Soldes & Impayés - {niveau_actif}")
@@ -24,19 +24,36 @@ def afficher_soldes_impayes(niveau_actif):
                 "Matricule": eleve.matricule,
                 "Nom": eleve.nom,
                 "Prénom": eleve.prenom,
-                "Classe": eleve.classe.nom,
+                "Classe": eleve.classe.nom if eleve.classe else "N/A",
                 "Total Dû (FCFA)": total_du,
                 "Déjà Payé (FCFA)": total_paye,
                 "Reste à Payer (FCFA)": reste_a_payer
             })
 
     if not data_impayes:
-        st.success("Aucun impayé détecté pour ce cycle !")
+        st.success("✅ Aucun impayé détecté pour ce cycle !")
     else:
         df = pd.DataFrame(data_impayes)
-        st.dataframe(df, use_container_width=True)
         
+        # Formatage pour l'affichage (ajout de séparateurs de milliers)
+        df_display = df.copy()
+        df_display["Total Dû (FCFA)"] = df_display["Total Dû (FCFA)"].apply(lambda x: f"{x:,.0f}")
+        df_display["Déjà Payé (FCFA)"] = df_display["Déjà Payé (FCFA)"].apply(lambda x: f"{x:,.0f}")
+        df_display["Reste à Payer (FCFA)"] = df_display["Reste à Payer (FCFA)"].apply(lambda x: f"{x:,.0f}")
+        
+        st.dataframe(df_display, use_container_width=True, hide_index=True)
+        
+        # Calcul et affichage du total global
         total_global_impaye = df["Reste à Payer (FCFA)"].sum()
         st.metric("Total des Impayés du cycle", f"{total_global_impaye:,.0f} FCFA")
+        
+        # Option d'export CSV
+        csv = df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Exporter la liste des impayés (CSV)",
+            data=csv,
+            file_name=f"impayes_{niveau_actif}_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+            mime="text/csv"
+        )
 
     db.close()
