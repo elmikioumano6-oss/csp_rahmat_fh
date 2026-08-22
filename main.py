@@ -241,43 +241,6 @@ if not st.session_state["authenticated"]:
     afficher_login()
     st.stop()
 
-# ==========================================
-# IMPORTATION DES VUES
-# ==========================================
-from views.accueil import afficher_accueil
-from views.annee_scolaire import afficher_annee_scolaire
-from views.backup import afficher_backup
-from views.bulletins import afficher_bulletins
-from views.cahier_texte import afficher_cahier_texte
-from views.cartes_scolaires import afficher_cartes_scolaires
-from views.classes import afficher_classes
-from views.conseil_classe import afficher_conseil_classe
-from views.consultation_notes import afficher_consultation_notes
-from views.depenses import afficher_depenses
-from views.eleves import afficher_eleves
-from views.emploi_du_temps import afficher_emploi_du_temps
-from views.enseignants import afficher_enseignants
-from views.finances import afficher_finances
-from views.gestion_utilisateurs import afficher_gestion_utilisateurs
-from views.journal_activite import afficher_journal_activite
-from views.matieres import afficher_matieres
-from views.messages import afficher_messages
-from views.notes import afficher_notes
-from views.parent_space import afficher_espace_parent
-from views.personnels_roles import afficher_personnels
-from views.photos_masse import afficher_import_photos_masse
-from views.planification import afficher_planification
-from views.presence import afficher_presence
-from views.rapports import afficher_rapports
-from views.soldes_impayes import afficher_soldes_impayes
-from views.stats_encaissements import afficher_stats_encaissements
-from views.supervision_cahier import afficher_supervision_cahier
-from views.supervision_progression import afficher_supervision_progression
-from views.tableau_finances import afficher_tableau_finances
-from views.upload_programmes import afficher_upload_programmes
-from views.tableau_de_bord import afficher_tableau_bord
-from views.alerte_performance import afficher_alerte_performance
-
 
 def main():
     db = SessionLocal()
@@ -415,88 +378,125 @@ def main():
     if role == "admin":
         st.markdown("---")
 
-    # --- ROUTAGE ---
+    # --- ROUTAGE AVEC CHARGEMENT DIFFÉRÉ (LAZY LOADING) ---
     if role == "admin":
         if page == "Accueil":
+            from views.accueil import afficher_accueil
             afficher_accueil()
         elif page == "Année scolaire":
+            from views.annee_scolaire import afficher_annee_scolaire
             afficher_annee_scolaire()
         elif page == "Classes & Tarifs":
+            from views.classes import afficher_classes
             afficher_classes()
         elif page == "Matières & Coeffs":
+            from views.matieres import afficher_matieres
             afficher_matieres()
         elif page == "Enseignants":
+            from views.enseignants import afficher_enseignants
             afficher_enseignants()
         elif page == "Personnels et rôles":
+            from views.personnels_roles import afficher_personnels
             afficher_personnels(niveau_actif)
         elif page == "Gestion Comptes":
+            from views.gestion_utilisateurs import afficher_gestion_utilisateurs
             afficher_gestion_utilisateurs()
         elif page == "Inscription Élèves":
+            from views.eleves import afficher_eleves
             afficher_eleves(niveau_actif)
         elif page == "Import Photos en Masse":
+            from views.photos_masse import afficher_import_photos_masse
             afficher_import_photos_masse(niveau_actif)
         elif page == "Cartes Scolaires":
+            from views.cartes_scolaires import afficher_cartes_scolaires
             afficher_cartes_scolaires(niveau_actif)
         elif page == "Espace Profs":
             st.subheader("👨‍🏫 Espace Enseignants (Supervision Admin)")
             tab_p1, tab_p2, tab_p3 = st.tabs(["Saisie de notes", "Présence", "Cahier de texte"])
             with tab_p1:
+                from views.notes import afficher_notes
                 afficher_notes(niveau_actif)
             with tab_p2:
+                from views.presence import afficher_presence
                 afficher_presence()
             with tab_p3:
+                from views.cahier_texte import afficher_cahier_texte
                 afficher_cahier_texte(niveau_actif)
         elif page == "Consultations des notes":
+            from views.consultation_notes import afficher_consultation_notes
             afficher_consultation_notes(niveau_actif)
         elif page == "Conseil de classe":
+            from views.conseil_classe import afficher_conseil_classe
             afficher_conseil_classe(niveau_actif)
         elif page == "Bulletins":
+            from views.bulletins import afficher_bulletins
             afficher_bulletins(niveau_actif)
         elif page == "Supervision cahier":
+            from views.supervision_cahier import afficher_supervision_cahier
             afficher_supervision_cahier(niveau_actif)
         elif page == "Import Programmes PDF":
+            from views.upload_programmes import afficher_upload_programmes
             afficher_upload_programmes(niveau_actif)
         elif page == "Suivi des Programmes":
+            from views.supervision_progression import afficher_supervision_progression
             afficher_supervision_progression(niveau_actif)
         elif page == "Emploi du temps":
+            from views.emploi_du_temps import afficher_emploi_du_temps
             afficher_emploi_du_temps(niveau_actif)
         elif page == "Planification des évaluations":
+            from views.planification import afficher_planification
             afficher_planification(niveau_actif)
         elif page == "Encaissement":
+            from views.finances import afficher_finances
             afficher_finances(niveau_actif)
         elif page == "Stats Encaissements":
+            from views.stats_encaissements import afficher_stats_encaissements
             afficher_stats_encaissements(niveau_actif)
         elif page == "Soldes & Impayés":
+            from views.soldes_impayes import afficher_soldes_impayes
             afficher_soldes_impayes(niveau_actif)
         elif page == "Tableau Finances":
+            from views.tableau_finances import afficher_tableau_finances
             afficher_tableau_finances(niveau_actif)
         elif page == "Dépenses":
+            from views.depenses import afficher_depenses
             afficher_depenses(niveau_actif)
         elif page == "Rapports":
+            from views.rapports import afficher_rapports
             afficher_rapports(niveau_actif)
         elif page == "Journal d'activité":
+            from views.journal_activite import afficher_journal_activite
             afficher_journal_activite(niveau_actif)
         elif page == "Messages":
+            from views.messages import afficher_messages
             afficher_messages(niveau_actif)
         elif page == "Espace Parent":
+            from views.parent_space import afficher_espace_parent
             afficher_espace_parent()
         elif page == "Tableau de bord":
+            from views.tableau_de_bord import afficher_tableau_bord
             afficher_tableau_bord(niveau_actif)
         elif page == "Alerte Pédagogique":
+            from views.alerte_performance import afficher_alerte_performance
             afficher_alerte_performance(niveau_actif)
         elif page == "Sauvegarde & BD":
+            from views.backup import afficher_backup
             afficher_backup()
 
     elif role == "parent":
         if page == "Mon Enfant":
+            from views.parent_space import afficher_espace_parent
             afficher_espace_parent()
 
     elif role == "prof":
         if page == "Saisie de notes":
+            from views.notes import afficher_notes
             afficher_notes(niveau_actif)
         elif page == "Présence":
+            from views.presence import afficher_presence
             afficher_presence()
         elif page == "Cahier de texte":
+            from views.cahier_texte import afficher_cahier_texte
             afficher_cahier_texte(niveau_actif)
 
     db.close()
