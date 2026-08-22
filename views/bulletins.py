@@ -146,7 +146,6 @@ def construire_html_bulletin(
             else ("Assez Bien" if moy_mat >= 10 else "Faible")
         )
 
-        # Contenu centré verticalement et horizontalement pour NoteClasse jusqu'à Signature
         lignes_tableau += f"""
         <tr>
             <td style="text-align: left; padding-left: 6px; padding-top: 6px; padding-bottom: 6px; vertical-align: middle; border: 1px solid #000 !important;">{m.nom}</td>
