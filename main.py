@@ -21,7 +21,7 @@ from views.login import afficher_login
 Base.metadata.create_all(bind=engine)
 
 # ==========================================
-# AUTO-INITIALISATION DE L'ADMIN SÉCURISÉ
+# AUTO-INITIALISATION DE LA'ADMIN SÉCURISÉ
 # ==========================================
 db_init = SessionLocal()
 try:
@@ -40,171 +40,172 @@ finally:
     db_init.close()
 
 # ==========================================
-# MIGRATIONS AUTOMATIQUES ET ROBUSTES
+# MIGRATIONS AUTOMATIQUES (Uniquement pour SQLite en local)
 # ==========================================
-with engine.connect() as connection:
-    # Table notes
-    try:
-        res = connection.execute(text("PRAGMA table_info(notes);")).fetchall()
-        cols = [row[1] for row in res]
-        if "semestre" not in cols:
+if "sqlite" in str(engine.url):
+    with engine.connect() as connection:
+        # Table notes
+        try:
+            res = connection.execute(text("PRAGMA table_info(notes);")).fetchall()
+            cols = [row[1] for row in res]
+            if "semestre" not in cols:
+                connection.execute(
+                    text("ALTER TABLE notes ADD COLUMN semestre INTEGER DEFAULT 1;")
+                )
+                connection.commit()
+        except Exception:
+            pass
+
+        # Table classes
+        try:
+            res = connection.execute(text("PRAGMA table_info(classes);")).fetchall()
+            cols = [row[1] for row in res]
+            if "cycle" not in cols:
+                connection.execute(
+                    text("ALTER TABLE classes ADD COLUMN cycle TEXT;")
+                )
+            if "tarif_scolarite" not in cols:
+                connection.execute(
+                    text(
+                        "ALTER TABLE classes ADD COLUMN tarif_scolarite FLOAT DEFAULT 0.0;"
+                    )
+                )
+            connection.commit()
+        except Exception:
+            pass
+
+        # Table enseignants
+        try:
+            res = connection.execute(
+                text("PRAGMA table_info(enseignants);")
+            ).fetchall()
+            cols = [row[1] for row in res]
+            if "specialite" not in cols:
+                connection.execute(
+                    text("ALTER TABLE enseignants ADD COLUMN specialite TEXT;")
+                )
+                connection.commit()
+        except Exception:
+            pass
+
+        # Table eleves (SÉCURISATION INDIVIDUELLE DES COLONNES)
+        try:
             connection.execute(
-                text("ALTER TABLE notes ADD COLUMN semestre INTEGER DEFAULT 1;")
+                text("ALTER TABLE eleves ADD COLUMN telephone TEXT;")
             )
             connection.commit()
-    except Exception:
-        pass
+        except Exception:
+            pass
 
-    # Table classes
-    try:
-        res = connection.execute(text("PRAGMA table_info(classes);")).fetchall()
-        cols = [row[1] for row in res]
-        if "cycle" not in cols:
-            connection.execute(
-                text("ALTER TABLE classes ADD COLUMN cycle TEXT;")
-            )
-        if "tarif_scolarite" not in cols:
+        try:
             connection.execute(
                 text(
-                    "ALTER TABLE classes ADD COLUMN tarif_scolarite FLOAT DEFAULT 0.0;"
+                    "ALTER TABLE eleves ADD COLUMN montant_reduction FLOAT DEFAULT 0.0;"
                 )
-            )
-        connection.commit()
-    except Exception:
-        pass
-
-    # Table enseignants
-    try:
-        res = connection.execute(
-            text("PRAGMA table_info(enseignants);")
-        ).fetchall()
-        cols = [row[1] for row in res]
-        if "specialite" not in cols:
-            connection.execute(
-                text("ALTER TABLE enseignants ADD COLUMN specialite TEXT;")
             )
             connection.commit()
-    except Exception:
-        pass
+        except Exception:
+            pass
 
-    # Table eleves (SÉCURISATION INDIVIDUELLE DES COLONNES)
-    try:
-        connection.execute(
-            text("ALTER TABLE eleves ADD COLUMN telephone TEXT;")
-        )
-        connection.commit()
-    except Exception:
-        pass
-
-    try:
-        connection.execute(
-            text(
-                "ALTER TABLE eleves ADD COLUMN montant_reduction FLOAT DEFAULT 0.0;"
-            )
-        )
-        connection.commit()
-    except Exception:
-        pass
-
-    try:
-        connection.execute(text("ALTER TABLE eleves ADD COLUMN photo TEXT;"))
-        connection.commit()
-    except Exception:
-        pass
-
-    try:
-        connection.execute(text("ALTER TABLE eleves ADD COLUMN parent_id INTEGER;"))
-        connection.commit()
-    except Exception:
-        pass
-
-    # Table programmes (Migration automatique de la colonne document_pdf)
-    try:
-        res = connection.execute(
-            text("PRAGMA table_info(programmes);")
-        ).fetchall()
-        cols = [row[1] for row in res]
-        if "document_pdf" not in cols:
-            connection.execute(
-                text("ALTER TABLE programmes ADD COLUMN document_pdf TEXT;")
-            )
+        try:
+            connection.execute(text("ALTER TABLE eleves ADD COLUMN photo TEXT;"))
             connection.commit()
-    except Exception:
-        pass
+        except Exception:
+            pass
 
-    # Table echeances_paiement
-    try:
-        res = connection.execute(
-            text("PRAGMA table_info(echeances_paiement);")
-        ).fetchall()
-        cols = [row[1] for row in res]
-        if "eleve_id" not in cols:
-            connection.execute(
-                text("ALTER TABLE echeances_paiement ADD COLUMN eleve_id INTEGER;")
-            )
-        if "libelle" not in cols:
-            connection.execute(
-                text(
-                    "ALTER TABLE echeances_paiement ADD COLUMN libelle TEXT DEFAULT 'Scolarité';"
-                )
-            )
-        if "montant" not in cols:
-            connection.execute(
-                text(
-                    "ALTER TABLE echeances_paiement ADD COLUMN montant FLOAT DEFAULT 0.0;"
-                )
-            )
-        if "montant_total" not in cols:
-            connection.execute(
-                text(
-                    "ALTER TABLE echeances_paiement ADD COLUMN montant_total FLOAT DEFAULT 0.0;"
-                )
-            )
-        if "montant_paye" not in cols:
-            connection.execute(
-                text(
-                    "ALTER TABLE echeances_paiement ADD COLUMN montant_paye FLOAT DEFAULT 0.0;"
-                )
-            )
-        connection.commit()
-    except Exception:
-        pass
+        try:
+            connection.execute(text("ALTER TABLE eleves ADD COLUMN parent_id INTEGER;"))
+            connection.commit()
+        except Exception:
+            pass
 
-    # Table paiements_details
-    try:
-        res = connection.execute(
-            text("PRAGMA table_info(paiements_details);")
-        ).fetchall()
-        cols = [row[1] for row in res]
-        if "echeance_id" not in cols:
-            connection.execute(
-                text(
-                    "ALTER TABLE paiements_details ADD COLUMN echeance_id INTEGER;"
+        # Table programmes (Migration automatique de la colonne document_pdf)
+        try:
+            res = connection.execute(
+                text("PRAGMA table_info(programmes);")
+            ).fetchall()
+            cols = [row[1] for row in res]
+            if "document_pdf" not in cols:
+                connection.execute(
+                    text("ALTER TABLE programmes ADD COLUMN document_pdf TEXT;")
                 )
-            )
-        if "eleve_id" not in cols:
-            connection.execute(
-                text(
-                    "ALTER TABLE paiements_details ADD COLUMN eleve_id INTEGER;"
+                connection.commit()
+        except Exception:
+            pass
+
+        # Table echeances_paiement
+        try:
+            res = connection.execute(
+                text("PRAGMA table_info(echeances_paiement);")
+            ).fetchall()
+            cols = [row[1] for row in res]
+            if "eleve_id" not in cols:
+                connection.execute(
+                    text("ALTER TABLE echeances_paiement ADD COLUMN eleve_id INTEGER;")
                 )
-            )
-        if "montant" not in cols:
-            connection.execute(
-                text(
-                    "ALTER TABLE paiements_details ADD COLUMN montant FLOAT DEFAULT 0.0;"
+            if "libelle" not in cols:
+                connection.execute(
+                    text(
+                        "ALTER TABLE echeances_paiement ADD COLUMN libelle TEXT DEFAULT 'Scolarité';"
+                    )
                 )
-            )
-        if "date" not in cols:
-            connection.execute(
-                text("ALTER TABLE paiements_details ADD COLUMN date TEXT;")
-            )
-        if "mode" not in cols:
-            connection.execute(
-                text("ALTER TABLE paiements_details ADD COLUMN mode TEXT;")
-            )
-        connection.commit()
-    except Exception:
-        pass
+            if "montant" not in cols:
+                connection.execute(
+                    text(
+                        "ALTER TABLE echeances_paiement ADD COLUMN montant FLOAT DEFAULT 0.0;"
+                    )
+                )
+            if "montant_total" not in cols:
+                connection.execute(
+                    text(
+                        "ALTER TABLE echeances_paiement ADD COLUMN montant_total FLOAT DEFAULT 0.0;"
+                    )
+                )
+            if "montant_paye" not in cols:
+                connection.execute(
+                    text(
+                        "ALTER TABLE echeances_paiement ADD COLUMN montant_paye FLOAT DEFAULT 0.0;"
+                    )
+                )
+            connection.commit()
+        except Exception:
+            pass
+
+        # Table paiements_details
+        try:
+            res = connection.execute(
+                text("PRAGMA table_info(paiements_details);")
+            ).fetchall()
+            cols = [row[1] for row in res]
+            if "echeance_id" not in cols:
+                connection.execute(
+                    text(
+                        "ALTER TABLE paiements_details ADD COLUMN echeance_id INTEGER;"
+                    )
+                )
+            if "eleve_id" not in cols:
+                connection.execute(
+                    text(
+                        "ALTER TABLE paiements_details ADD COLUMN eleve_id INTEGER;"
+                    )
+                )
+            if "montant" not in cols:
+                connection.execute(
+                    text(
+                        "ALTER TABLE paiements_details ADD COLUMN montant FLOAT DEFAULT 0.0;"
+                    )
+                )
+            if "date" not in cols:
+                connection.execute(
+                    text("ALTER TABLE paiements_details ADD COLUMN date TEXT;")
+                )
+            if "mode" not in cols:
+                connection.execute(
+                    text("ALTER TABLE paiements_details ADD COLUMN mode TEXT;")
+                )
+            connection.commit()
+        except Exception:
+            pass
 
 # ==========================================
 # CONFIGURATION DE LA PAGE AVEC LOGO
