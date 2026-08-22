@@ -28,7 +28,18 @@ def afficher_login():
                 margin: 0 auto;
             }
             
-            /* --- RECTANGLE DÉFILANT DES MODULES AU-DESSUS DU LOGO --- */
+            /* --- TITRE INSTITUTIONNEL AU-DESSUS DU BANDEAU --- */
+            .auth-header-title {
+                color: #CBD5E1;
+                font-size: 0.75rem;
+                text-align: center;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+            
+            /* --- RECTANGLE DÉFILANT DES MODULES --- */
             .modules-ticker-container {
                 background: rgba(30, 41, 59, 0.8);
                 border: 1px solid rgba(220, 38, 38, 0.4);
@@ -115,6 +126,13 @@ def afficher_login():
     with col_center:
         st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
         
+        # --- TITRE INSTITUTIONNEL AU-DESSUS DU BANDEAU DÉFILANT ---
+        st.markdown("""
+            <div class="auth-header-title">
+                ✨ Complexe Scolaire Privé ✨
+            </div>
+        """, unsafe_allow_html=True)
+        
         # --- RECTANGLE AVEC TEXTE DÉFILANT DES MODULES ---
         st.markdown("""
             <div class="modules-ticker-container">
@@ -149,7 +167,7 @@ def afficher_login():
                 <div class="auth-subtitle">Portail d'Administration</div>
         """, unsafe_allow_html=True)
 
-        with st.form("form_login_modules"):
+        with st.form("form_login_modules_titre"):
             username = st.text_input("Nom d'utilisateur", placeholder="Votre identifiant...")
             password = st.text_input("Mot de passe", type="password", placeholder="••••••••")
             
