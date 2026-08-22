@@ -1,24 +1,25 @@
 import os
+import streamlit as st
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 
-# On force l'utilisation de SQLite pour garantir la stabilité immédiate partout
-is_cloud = False
+# 1. Priorité aux secrets Streamlit (Cloud)
+# 2. Sinon, utilisation de la variable d'environnement (Local)
+# 3. Sinon, utilisation du hardcoded pour dépannage (Déconseillé en production)
+DATABASE_URL = (
+    st.secrets.get("DATABASE_URL") or 
+    os.getenv("DATABASE_URL") or 
+    "postgresql://postgres.fdexnwjlobxzodxsdysq:Rahmatfh2026@aws-1-eu-west-1.pooler.supabase.com:6543/postgres"
+)
 
-if is_cloud:
-    SQLALCHEMY_DATABASE_URL = os.getenv(
-        "DATABASE_URL", 
-        "postgresql://postgres:Rahmatfh2026@db.djwhxbencnyussvhejrx.supabase.co:5432/postgres"
-    )
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
-else:
-    DOSSIER_DB = "database"
-    os.makedirs(DOSSIER_DB, exist_ok=True)
-    SQLALCHEMY_DATABASE_URL = f"sqlite:///{DOSSIER_DB}/scolarite.db"
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL, 
-        connect_args={"check_same_thread": False}
-    )
+# Création du moteur PostgreSQL avec gestion de pool pour éviter les timeout de connexion
+engine = create_engine(
+    DATABASE_URL, 
+    pool_size=10, 
+    max_overflow=20,
+    pool_pre_ping=True  # Très important pour PostgreSQL sur le Cloud : vérifie la connexion avant chaque requête
+)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
