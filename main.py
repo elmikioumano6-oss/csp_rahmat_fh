@@ -14,6 +14,7 @@ from database.models import (
 )
 from sqlalchemy import text
 import streamlit as st
+from streamlit_option_menu import option_menu
 from views.login import afficher_login
 
 # Initialisation sécurisée de la base de données
@@ -106,11 +107,7 @@ def main():
     annee_libelle = annee.libelle if annee else "Non configurée"
     role = st.session_state.get("user_role", "admin")
 
-    # Initialisation de la page active dans la session pour éviter les pertes de focus
-    if "current_page" not in st.session_state:
-        st.session_state["current_page"] = "Accueil"
-
-    # --- BARRE LATÉRALE : MENU NATIF ULTRA-STABLE ---
+    # --- BARRE LATÉRALE : MENU ORIGINAL RESTAURÉ ---
     with st.sidebar:
         st.markdown(
             f"""
@@ -142,31 +139,68 @@ def main():
         st.markdown("---")
 
         if role == "admin":
-            st.markdown("<p style='color: #94A3B8; font-weight: bold; font-size: 0.85rem;'>NAVIGATION</p>", unsafe_allow_html=True)
-            pages_admin = [
-                "Accueil", "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
-                "Personnels et rôles", "Gestion Comptes", "Inscription Élèves", 
-                "Import Photos en Masse", "Cartes Scolaires", "Espace Profs", 
-                "Consultations des notes", "Conseil de classe", "Bulletins", 
-                "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
-                "Emploi du temps", "Planification des évaluations", "Encaissement", 
-                "Stats Encaissements", "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
-                "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord", "Alerte Pédagogique", "Sauvegarde & BD"
-            ]
-            
-            # Menu déroulant natif ultra-rapide et indéfectible dans la sidebar
-            page = st.selectbox("Sélectionner une rubrique", pages_admin, key="selectbox_admin_nav", label_visibility="collapsed")
-            st.session_state["current_page"] = page
-
+            page = option_menu(
+                "NAVIGATION",
+                [
+                    "Accueil", "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
+                    "Personnels et rôles", "Gestion Comptes", "Inscription Élèves", 
+                    "Import Photos en Masse", "Cartes Scolaires", "Espace Profs", 
+                    "Consultations des notes", "Conseil de classe", "Bulletins", 
+                    "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
+                    "Emploi du temps", "Planification des évaluations", "Encaissement", 
+                    "Stats Encaissements", "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
+                    "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord", "Alerte Pédagogique", "Sauvegarde & BD"
+                ],
+                icons=[
+                    "house", "calendar-event", "building", "book", "person-badge", "shield-lock", "people-fill",
+                    "people", "folder-plus", "card-list", "book-half", "journal-text", "people-fill", 
+                    "file-earmark-text", "eye", "file-earmark-pdf", "graph-up-arrow", "calendar3", 
+                    "calendar-check", "cash-coin", "graph-up", "wallet2", "graph-up", "receipt", "file-bar-graph", 
+                    "clock-history", "chat-dots", "person-badge", "speedometer", "exclamation-triangle", "hdd-stack"
+                ],
+                menu_icon="cast", default_index=0,
+                key="menu_admin_original_v2",
+                styles={
+                    "container": {"padding": "5px", "background-color": "#0F172A"},
+                    "icon": {"color": "#D97706", "font-size": "16px"},
+                    "nav-link": {
+                        "font-size": "13px", "text-align": "left", "margin": "3px 0px", 
+                        "color": "#E2E8F0", "--hover-color": "#1E293B",
+                    },
+                    "nav-link-selected": {"background-color": "#D97706"},
+                },
+            )
         elif role == "parent":
-            st.markdown("<p style='color: #10B981; font-weight: bold; font-size: 0.85rem;'>ESPACE PARENT</p>", unsafe_allow_html=True)
-            page = st.selectbox("Menu Parent", ["Mon Enfant"], key="selectbox_parent_nav", label_visibility="collapsed")
-            st.session_state["current_page"] = page
-
+            page = option_menu(
+                "ESPACE PARENT", ["Mon Enfant"], icons=["person-badge"], 
+                menu_icon="shield-lock", default_index=0,
+                key="menu_parent_original",
+                styles={
+                    "container": {"padding": "5px", "background-color": "#0F172A"},
+                    "icon": {"color": "#10B981", "font-size": "16px"},
+                    "nav-link": {
+                        "font-size": "13px", "text-align": "left", "margin": "3px 0px", 
+                        "color": "#E2E8F0", "--hover-color": "#1E293B",
+                    },
+                    "nav-link-selected": {"background-color": "#10B981"},
+                },
+            )
         elif role == "prof":
-            st.markdown("<p style='color: #F59E0B; font-weight: bold; font-size: 0.85rem;'>ESPACE PROF</p>", unsafe_allow_html=True)
-            page = st.selectbox("Menu Prof", ["Saisie de notes", "Présence", "Cahier de texte"], key="selectbox_prof_nav", label_visibility="collapsed")
-            st.session_state["current_page"] = page
+            page = option_menu(
+                "ESPACE PROF", ["Saisie de notes", "Présence", "Cahier de texte"], 
+                icons=["pencil-square", "calendar-check", "journal-bookmark"], 
+                menu_icon="book-half", default_index=0,
+                key="menu_prof_original",
+                styles={
+                    "container": {"padding": "5px", "background-color": "#0F172A"},
+                    "icon": {"color": "#F59E0B", "font-size": "16px"},
+                    "nav-link": {
+                        "font-size": "13px", "text-align": "left", "margin": "3px 0px", 
+                        "color": "#E2E8F0", "--hover-color": "#1E293B",
+                    },
+                    "nav-link-selected": {"background-color": "#F59E0B"},
+                },
+            )
         else:
             page = "Accueil"
 
@@ -175,8 +209,6 @@ def main():
             st.session_state["authenticated"] = False
             st.query_params.clear() 
             st.rerun()
-
-    page = st.session_state["current_page"]
 
     # --- EN-TÊTE SUPÉRIEUR ÉLÉGANT ---
     st.markdown(
