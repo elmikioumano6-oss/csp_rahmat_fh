@@ -276,6 +276,7 @@ from views.supervision_progression import afficher_supervision_progression
 from views.tableau_finances import afficher_tableau_finances
 from views.upload_programmes import afficher_upload_programmes
 from views.tableau_de_bord import afficher_tableau_bord
+from views.alerte_performance import afficher_alerte_performance
 
 
 def main():
@@ -333,14 +334,14 @@ def main():
                     "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
                     "Emploi du temps", "Planification des évaluations", "Encaissement", 
                     "Stats Encaissements", "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
-                    "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord", "Sauvegarde & BD"
+                    "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord", "Alerte Pédagogique", "Sauvegarde & BD"
                 ],
                 icons=[
                     "house", "calendar-event", "building", "book", "person-badge", "shield-lock", "people-fill",
                     "people", "folder-plus", "card-list", "book-half", "journal-text", "people-fill", 
                     "file-earmark-text", "eye", "file-earmark-pdf", "graph-up-arrow", "calendar3", 
                     "calendar-check", "cash-coin", "graph-up", "wallet2", "graph-up", "receipt", "file-bar-graph", 
-                    "clock-history", "chat-dots", "person-badge", "speedometer", "hdd-stack"
+                    "clock-history", "chat-dots", "person-badge", "speedometer", "exclamation-triangle", "hdd-stack"
                 ],
                 menu_icon="cast", default_index=0,
                 styles={
@@ -481,6 +482,8 @@ def main():
             afficher_espace_parent()
         elif page == "Tableau de bord":
             afficher_tableau_bord(niveau_actif)
+        elif page == "Alerte Pédagogique":
+            afficher_alerte_performance(niveau_actif)
         elif page == "Sauvegarde & BD":
             afficher_backup()
 
