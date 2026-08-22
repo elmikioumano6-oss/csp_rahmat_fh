@@ -1,16 +1,15 @@
 import streamlit as st
 import pandas as pd
 from database.db_config import SessionLocal
-from database.models import PaiementsDetails, Eleve, Classe
-from sqlalchemy import func
+from database.models import PaiementDetail, Eleve, Classe
 
 def afficher_stats_encaissements(niveau_actif):
     st.subheader(f"📊 Statistiques des Encaissements - {niveau_actif}")
     db = SessionLocal()
 
     # Récupération des paiements joints aux élèves et classes
-    data = db.query(PaiementsDetails, Eleve, Classe).\
-        join(Eleve, PaiementsDetails.eleve_id == Eleve.id).\
+    data = db.query(PaiementDetail, Eleve, Classe).\
+        join(Eleve, PaiementDetail.eleve_id == Eleve.id).\
         join(Classe, Eleve.classe_id == Classe.id).\
         filter(Classe.cycle == niveau_actif).all()
 
