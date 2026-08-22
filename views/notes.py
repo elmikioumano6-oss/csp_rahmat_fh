@@ -1,223 +1,125 @@
-from datetime import datetime
-import pandas as pd
-from database.db_config import SessionLocal
-from database.models import (
-    Classe,
-    Eleve,
-    Enseignant,
-    LogActivite,
-    Matiere,
-    Note,
-    Affectation,
-    User,
-)
 import streamlit as st
+import pandas as pd
+from datetime import datetime
+from database.db_config import SessionLocal
+from database.models import Classe, Eleve, Matiere, Note, LogActivite
 
-
-def afficher_notes(niveau_actif=None, prof_id=None):
-    role_actuel = st.session_state.get("user_role", "Admin")
+def afficher_notes(niveau_actif):
+    st.subheader(f"📝 Saisie des Notes - {niveau_actif}")
+    st.markdown("Attribution des notes de classe et de composition par classe et par matière.")
 
     db = SessionLocal()
     try:
-        # --- RÉCUPÉRATION SÉCURISÉE DU PROF_ID ---
-        if not prof_id and role_actuel == "prof":
-            username = st.session_state.get("username")
-            if username:
-                user = db.query(User).filter(User.username == username).first()
-                if user:
-                    ens = db.query(Enseignant).filter(Enseignant.user_id == user.id).first()
-                    if ens:
-                        prof_id = ens.id
+        # Récupération des classes du cycle actif
+        classes = db.query(Classe).filter(Classe.cycle == niveau_actif).all()
+        if not classes:
+            st.warning("⚠️ Aucune classe enregistrée pour ce cycle.")
+            return
 
-        if role_actuel == "prof":
-            st.subheader(f"📝 Saisie et Gestion des Notes (Espace Professeur) - {niveau_actif}")
-        else:
-            st.subheader(f"📝 Saisie et Gestion des Notes - {niveau_actif}")
+        # Dictionnaire unique pour éviter les conflits entre classes homonymes
+        classe_options = {f"{c.nom} ({c.cycle}) [ID:{c.id}]": c.id for c in classes}
+        classe_libelle = st.selectbox("Sélectionner la classe", list(classe_options.keys()))
+        classe_id = classe_options[classe_libelle]
 
-        # --- FILTRAGE DES CLASSES ET MATIÈRES SELON LE RÔLE ---
-        classes = []
-        affectations_prof = []
+        # Récupération des matières
+        matieres = db.query(Matiere).all()
+        if not matieres:
+            st.warning("⚠️ Aucune matière enregistrée.")
+            return
+        matiere_options = {m.nom: m.id for m in matieres}
+        matiere_nom = st.selectbox("Sélectionner la matière", list(matiere_options.keys()))
+        matiere_id = matiere_options[matiere_nom]
 
-        if prof_id:
-            enseignant = db.query(Enseignant).filter(Enseignant.id == prof_id).first()
-            if enseignant:
-                affectations_prof = db.query(Affectation).filter(Affectation.enseignant_id == prof_id).all()
-                affectations_cycle = [aff for aff in affectations_prof if aff.classe and aff.classe.cycle == niveau_actif]
-                classes_dict = {aff.classe.id: aff.classe for aff in affectations_cycle}
-                classes = list(classes_dict.values())
-        else:
-            classes = db.query(Classe).filter(Classe.cycle == niveau_actif).all()
-
-        # --- FORMULAIRE DE SAISIE DE NOTES ---
-        with st.form("form_saisie_notes"):
-            st.write("### Saisir ou modifier une note")
-
-            if not classes:
-                st.warning(
-                    f"⚠️ Aucune classe ne vous est assignée pour le cycle {niveau_actif}."
-                    if prof_id
-                    else f"⚠️ Aucune classe trouvée pour le cycle {niveau_actif}."
-                )
-                return
-
-            options_classes = {c.nom: c.id for c in classes}
-            classe_nom = st.selectbox("Sélectionner la classe", list(options_classes.keys()))
-            classe_id = options_classes[classe_nom]
-
-            eleves = db.query(Eleve).filter(Eleve.classe_id == classe_id).all()
-            if not eleves:
-                st.warning("⚠️ Aucun élève inscrit dans cette classe.")
-                return
-
-            options_eleves = {f"{e.matricule} - {e.nom} {e.prenom}": e.id for e in eleves}
-            eleve_label = st.selectbox("Sélectionner l'élève", list(options_eleves.keys()))
-            eleve_id = options_eleves[eleve_label]
-
-            matieres_disponibles = []
-            if prof_id:
-                matieres_pour_classe = [aff.matiere for aff in affectations_prof if aff.classe_id == classe_id]
-                matieres_dict = {m.id: m for m in matieres_pour_classe if m}
-                matieres_disponibles = list(matieres_dict.values())
-            else:
-                matieres_disponibles = db.query(Matiere).all()
-
-            if not matieres_disponibles:
-                st.warning(
-                    "⚠️ Aucune matière ne vous est assignée pour cette classe."
-                    if prof_id
-                    else "⚠️ Aucune matière enregistrée dans le système."
-                )
-                return
-
-            options_matieres = {m.nom: m.id for m in matieres_disponibles}
-            matiere_nom = st.selectbox("Sélectionner la matière", list(options_matieres.keys()))
-            matiere_id = options_matieres[matiere_nom]
-
-            semestre = st.selectbox("Semestre", [1, 2])
-            col1, col2 = st.columns(2)
-            note_classe = col1.number_input("Note de Classe / Interro (sur 20)", min_value=0.0, max_value=20.0, step=0.25)
-            note_compo = col2.number_input("Note de Composition (sur 20)", min_value=0.0, max_value=20.0, step=0.25)
-
-            submitted = st.form_submit_button("Enregistrer la note")
-            if submitted:
-                note_existante = (
-                    db.query(Note)
-                    .filter(
-                        Note.eleve_id == eleve_id,
-                        Note.matiere_id == matiere_id,
-                        Note.semestre == semestre,
-                    )
-                    .first()
-                )
-
-                if note_existante:
-                    note_existante.note_classe = note_classe
-                    note_existante.note_compo = note_compo
-                    action_str = "MODIFICATION NOTE"
-                    details_str = f"Mise à jour note élève ID {eleve_id}, matière ID {matiere_id} (Semestre {semestre})"
-                else:
-                    nouvelle_note = Note(
-                        eleve_id=eleve_id,
-                        matiere_id=matiere_id,
-                        note_classe=note_classe,
-                        note_compo=note_compo,
-                        semestre=semestre,
-                    )
-                    db.add(nouvelle_note)
-                    action_str = "SAISIE NOTE"
-                    details_str = f"Ajout note élève ID {eleve_id}, matière ID {matiere_id} (Semestre {semestre})"
-
-                db.add(
-                    LogActivite(
-                        date=datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        utilisateur=st.session_state.get("user_role", "Admin"),
-                        action=action_str,
-                        details=details_str,
-                    )
-                )
-
-                db.commit()
-                st.success("✅ Note enregistrée et tracée avec succès !")
-                st.rerun()
+        semestre = st.selectbox("Sélectionner le semestre", [1, 2], index=0)
 
         st.markdown("---")
 
-        # --- ESPACE DE CORRECTION / MODIFICATION / SUPPRESSION DES NOTES ---
-        with st.expander("🛠️ Modifier ou supprimer une note enregistrée"):
-            if prof_id:
-                classe_ids = [c.id for c in classes]
-                matiere_ids = [m.id for aff in affectations_prof if (m := aff.matiere)]
-                notes_cycle = (
-                    db.query(Note)
-                    .join(Eleve)
-                    .join(Classe)
-                    .filter(
-                        Classe.cycle == niveau_actif,
-                        Eleve.classe_id.in_(classe_ids),
-                        Note.matiere_id.in_(matiere_ids),
+        # Récupération des élèves de la classe sélectionnée
+        eleves = db.query(Eleve).filter(Eleve.classe_id == classe_id).order_by(Eleve.nom).all()
+        if not eleves:
+            st.info("ℹ️ Aucun élève inscrit dans cette classe pour le moment.")
+            return
+
+        st.write(f"### 📋 Liste des Élèves ({len(eleves)} élèves)")
+        
+        # Formulaire de saisie groupée des notes
+        with st.form("form_saisie_notes"):
+            notes_data = []
+            
+            # En-têtes du tableau de saisie
+            col_h1, col_h2, col_h3, col_h4 = st.columns([2, 2, 2, 2])
+            col_h1.markdown("**Matricule & Nom**")
+            col_h2.markdown("**Prénom**")
+            col_h3.markdown("**Note de Classe (/20)**")
+            col_h4.markdown("**Note de Compo (/20)**")
+
+            for eleve in eleves:
+                # Rechercher si une note existe déjà pour cet élève, cette matière et ce semestre
+                note_existante = db.query(Note).filter(
+                    Note.eleve_id == eleve.id,
+                    Note.matiere_id == matiere_id,
+                    Note.semestre == semestre
+                ).first()
+
+                val_classe = note_existante.note_classe if note_existante else 0.0
+                val_compo = note_existante.note_compo if note_existante else 0.0
+
+                c1, c2, c3, c4 = st.columns([2, 2, 2, 2])
+                with c1:
+                    st.text(f"{eleve.matricule} - {eleve.nom}")
+                with c2:
+                    st.text(eleve.prenom)
+                with c3:
+                    nc = st.number_input(
+                        "Classe", min_value=0.0, max_value=20.0, value=float(val_classe), 
+                        step=0.25, key=f"nc_{eleve.id}", label_visibility="collapsed"
                     )
-                    .order_by(Note.id.desc())
-                    .all()
-                )
-            else:
-                notes_cycle = (
-                    db.query(Note)
-                    .join(Eleve)
-                    .join(Classe)
-                    .filter(Classe.cycle == niveau_actif)
-                    .order_by(Note.id.desc())
-                    .all()
-                )
+                with c4:
+                    nco = st.number_input(
+                        "Compo", min_value=0.0, max_value=20.0, value=float(val_compo), 
+                        step=0.25, key=f"nco_{eleve.id}", label_visibility="collapsed"
+                    )
+                
+                notes_data.append({"eleve_id": eleve.id, "note_classe": nc, "note_compo": nco})
 
-            if notes_cycle:
-                options_n = {
-                    f"Note ID {n.id} - {n.eleve.nom} {n.eleve.prenom} (Semestre {n.semestre}) | Classe: {n.note_classe} | Compo: {n.note_compo}": n.id
-                    for n in notes_cycle
-                }
-                choix_n = st.selectbox("Sélectionner la note", list(options_n.keys()), key="select_note_modif")
-                n_id = options_n[choix_n]
-                n_obj = db.query(Note).filter(Note.id == n_id).first()
+            submitted = st.form_submit_button("💾 Enregistrer toutes les notes")
+            if submitted:
+                try:
+                    for item in notes_data:
+                        note_obj = db.query(Note).filter(
+                            Note.eleve_id == item["eleve_id"],
+                            Note.matiere_id == matiere_id,
+                            Note.semestre == semestre
+                        ).first()
 
-                if n_obj:
-                    action_type = st.radio("Action à effectuer", ["Modifier", "Supprimer"], horizontal=True, key="radio_action_note")
-
-                    if action_type == "Modifier":
-                        with st.form("form_modif_note"):
-                            c_m1, c_m2 = st.columns(2)
-                            nouveau_classe = c_m1.number_input("Note de Classe / Interro (sur 20)", min_value=0.0, max_value=20.0, step=0.25, value=float(n_obj.note_classe or 0.0))
-                            nouveau_compo = c_m2.number_input("Note de Composition (sur 20)", min_value=0.0, max_value=20.0, step=0.25, value=float(n_obj.note_compo or 0.0))
-
-                            submit_modif_note = st.form_submit_button("💾 Mettre à jour la note")
-                            if submit_modif_note:
-                                n_obj.note_classe = nouveau_classe
-                                n_obj.note_compo = nouveau_compo
-
-                                db.add(
-                                    LogActivite(
-                                        date=datetime.now().strftime("%Y-%m-%d %H:%M"),
-                                        utilisateur=st.session_state.get("user_role", "Admin"),
-                                        action="MODIFICATION NOTE",
-                                        details=f"Mise à jour directe de la note ID {n_obj.id} (Classe: {nouveau_classe}, Compo: {nouveau_compo})",
-                                    )
-                                )
-                                db.commit()
-                                st.success("✅ Note mise à jour avec succès !")
-                                st.rerun()
-                    else:
-                        if st.button("🗑️ Supprimer définitivement cette note", type="primary", key="btn_suppr_note"):
-                            db.add(
-                                LogActivite(
-                                    date=datetime.now().strftime("%Y-%m-%d %H:%M"),
-                                    utilisateur=st.session_state.get("user_role", "Admin"),
-                                    action="SUPPRESSION NOTE",
-                                    details=f"Suppression de la note ID {n_obj.id} (Élève ID {n_obj.eleve_id}, Semestre {n_obj.semestre})",
-                                )
+                        if note_obj:
+                            # Mise à jour
+                            note_obj.note_classe = item["note_classe"]
+                            note_obj.note_compo = item["note_compo"]
+                        else:
+                            # Création
+                            nouvelle_note = Note(
+                                eleve_id=item["eleve_id"],
+                                matiere_id=matiere_id,
+                                note_classe=item["note_classe"],
+                                note_compo=item["note_compo"],
+                                semestre=semestre
                             )
-                            db.delete(n_obj)
-                            db.commit()
-                            st.success("✅ Note supprimée et action tracée avec succès !")
-                            st.rerun()
-            else:
-                st.info("Aucune note enregistrée pour ce cycle à modifier ou supprimer.")
+                            db.add(nouvelle_note)
+
+                    # Journal d'activité
+                    db.add(LogActivite(
+                        date=datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        utilisateur=st.session_state.get("username", "Admin"),
+                        action="SAISIE DE NOTES",
+                        details=f"Notes enregistrées pour la classe ID {classe_id}, Matière ID {matiere_id}, Semestre {semestre}"
+                    ))
+
+                    db.commit()
+                    st.success("✅ Notes enregistrées et sauvegardées avec succès !")
+                except Exception as e:
+                    db.rollback()
+                    st.error(f"❌ Erreur lors de l'enregistrement : {e}")
+
     finally:
         db.close()
