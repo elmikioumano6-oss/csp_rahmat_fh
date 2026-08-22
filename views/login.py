@@ -2,9 +2,11 @@ import streamlit as st
 from database.db_config import SessionLocal
 from database.models import User
 import bcrypt
+from PIL import Image
+import os
 
 def afficher_login():
-    # Design CSS personnalisé : Rouge bordeaux, bleu marine et champs compacts
+    # Design CSS personnalisé avec labels en rouge bordeaux, plus grands, et champs compacts
     st.markdown("""
         <style>
             /* Masquer les éléments superflus de Streamlit */
@@ -12,17 +14,17 @@ def afficher_login():
             footer {visibility: hidden;}
             header {visibility: hidden;}
             
-            /* Fond immersif mélangeant Bleu Marine et touches de Bordeaux */
+            /* Fond immersif bleu marine et bordeaux */
             .stApp {
                 background: linear-gradient(135deg, #0B132B 0%, #1C2541 50%, #581C25 100%);
             }
             
             /* Carte de connexion centrale sophistiquée */
             .auth-card {
-                background: rgba(15, 23, 42, 0.85);
+                background: rgba(15, 23, 42, 0.9);
                 backdrop-filter: blur(16px);
                 -webkit-backdrop-filter: blur(16px);
-                border: 1px solid rgba(220, 38, 38, 0.2);
+                border: 1px solid rgba(220, 38, 38, 0.3);
                 padding: 2.5rem 2rem;
                 border-radius: 20px;
                 box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
@@ -41,13 +43,13 @@ def afficher_login():
                 color: #EF4444;
                 font-size: 0.8rem;
                 text-align: center;
-                margin-bottom: 1.8rem;
+                margin-bottom: 1.5rem;
                 text-transform: uppercase;
                 letter-spacing: 1.5px;
                 font-weight: 700;
             }
             
-            /* Réduction de la hauteur et style des champs de saisie */
+            /* Champs de saisie compacts */
             .stTextInput input {
                 background-color: #1E293B !important;
                 color: #FFFFFF !important;
@@ -57,15 +59,15 @@ def afficher_login():
                 font-size: 0.9rem !important;
             }
             .stTextInput input:focus {
-                border-color: #DC2626 !important;
-                box-shadow: 0 0 0 1px #DC2626 !important;
+                border-color: #EF4444 !important;
+                box-shadow: 0 0 0 1px #EF4444 !important;
             }
             
-            /* Étiquettes des champs */
+            /* Libellés (Nom d'utilisateur et Mot de passe) en rouge bordeaux et plus grands */
             label {
-                color: #CBD5E1 !important;
-                font-weight: 500 !important;
-                font-size: 0.85rem !important;
+                color: #EF4444 !important;
+                font-weight: 700 !important;
+                font-size: 1rem !important;
             }
             
             /* Bouton de connexion bordeaux stylisé */
@@ -86,21 +88,31 @@ def afficher_login():
     """, unsafe_allow_html=True)
 
     # Espacement vertical pour centrer la carte
-    st.markdown("<div style='height: 6vh;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 4vh;'></div>", unsafe_allow_html=True)
 
     _, col_center, _ = st.columns([1, 1.15, 1])
 
     with col_center:
+        st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
+        
+        # Affichage du logo de l'école s'il existe
+        col_logo1, col_logo2, col_logo3 = st.columns([1, 1.2, 1])
+        with col_logo2:
+            try:
+                if os.path.exists("Logo CSP-RAHMAT-FH.png"):
+                    logo_img = Image.open("Logo CSP-RAHMAT-FH.png")
+                    st.image(logo_img, use_container_width=True)
+                else:
+                    st.markdown("<div style='text-align: center; font-size: 2.5rem;'>🏫</div>", unsafe_allow_html=True)
+            except Exception:
+                st.markdown("<div style='text-align: center; font-size: 2.5rem;'>🏫</div>", unsafe_allow_html=True)
+
         st.markdown("""
-            <div class="auth-card">
-                <div style="text-align: center;">
-                    <span style="background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3); padding: 10px; border-radius: 50%; font-size: 1.6rem; display: inline-block;">🏫</span>
-                </div>
                 <div class="auth-title">CSP RAHMAT-FH</div>
                 <div class="auth-subtitle">Portail d'Administration</div>
         """, unsafe_allow_html=True)
 
-        with st.form("form_login_bordeaux"):
+        with st.form("form_login_bordeaux_logo"):
             username = st.text_input(
                 "Nom d'utilisateur", 
                 placeholder="Votre identifiant..."
@@ -111,7 +123,7 @@ def afficher_login():
                 placeholder="••••••••"
             )
             
-            st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
             submit = st.form_submit_button("Se connecter", use_container_width=True)
             
             if submit:
@@ -135,7 +147,7 @@ def afficher_login():
         
         st.markdown("""
             <div style="text-align: center; margin-top: 1.5rem;">
-                <p style="color: #64748B; font-size: 0.75rem; font-weight: 500;">
+                <p style="color: #94A3B8; font-size: 0.75rem; font-weight: 500;">
                     Sécurité Renforcée • RAHMAT-FH
                 </p>
             </div>
