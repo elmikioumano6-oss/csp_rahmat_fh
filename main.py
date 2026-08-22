@@ -124,18 +124,27 @@ def main():
         st.markdown("---")
 
         if role == "admin":
+            if "selected_admin_page" not in st.session_state:
+                st.session_state["selected_admin_page"] = "Accueil"
+
+            pages_admin = [
+                "Accueil", "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
+                "Personnels et rôles", "Gestion Comptes", "Inscription Élèves", 
+                "Import Photos en Masse", "Cartes Scolaires", "Espace Profs", 
+                "Consultations des notes", "Conseil de classe", "Bulletins", 
+                "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
+                "Emploi du temps", "Planification des évaluations", "Encaissement", 
+                "Stats Encaissements", "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
+                "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord", "Alerte Pédagogique", "Sauvegarde & BD"
+            ]
+
+            current_index = 0
+            if st.session_state["selected_admin_page"] in pages_admin:
+                current_index = pages_admin.index(st.session_state["selected_admin_page"])
+
             page = option_menu(
                 "NAVIGATION",
-                [
-                    "Accueil", "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
-                    "Personnels et rôles", "Gestion Comptes", "Inscription Élèves", 
-                    "Import Photos en Masse", "Cartes Scolaires", "Espace Profs", 
-                    "Consultations des notes", "Conseil de classe", "Bulletins", 
-                    "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
-                    "Emploi du temps", "Planification des évaluations", "Encaissement", 
-                    "Stats Encaissements", "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
-                    "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord", "Alerte Pédagogique", "Sauvegarde & BD"
-                ],
+                pages_admin,
                 icons=[
                     "house", "calendar-event", "building", "book", "person-badge", "shield-lock", "people-fill",
                     "people", "folder-plus", "card-list", "book-half", "journal-text", "people-fill", 
@@ -143,7 +152,9 @@ def main():
                     "calendar-check", "cash-coin", "graph-up", "wallet2", "graph-up", "receipt", "file-bar-graph", 
                     "clock-history", "chat-dots", "person-badge", "speedometer", "exclamation-triangle", "hdd-stack"
                 ],
-                menu_icon="cast", default_index=0,
+                menu_icon="cast", 
+                default_index=current_index,
+                key="menu_admin_stable_v3",
                 styles={
                     "container": {"padding": "5px", "background-color": "#0F172A"},
                     "icon": {"color": "#D97706", "font-size": "16px"},
@@ -154,10 +165,13 @@ def main():
                     "nav-link-selected": {"background-color": "#D97706"},
                 },
             )
+            st.session_state["selected_admin_page"] = page
+
         elif role == "parent":
             page = option_menu(
                 "ESPACE PARENT", ["Mon Enfant"], icons=["person-badge"], 
                 menu_icon="shield-lock", default_index=0,
+                key="menu_parent_stable",
                 styles={
                     "container": {"padding": "5px", "background-color": "#0F172A"},
                     "icon": {"color": "#10B981", "font-size": "16px"},
@@ -173,6 +187,7 @@ def main():
                 "ESPACE PROF", ["Saisie de notes", "Présence", "Cahier de texte"], 
                 icons=["pencil-square", "calendar-check", "journal-bookmark"], 
                 menu_icon="book-half", default_index=0,
+                key="menu_prof_stable",
                 styles={
                     "container": {"padding": "5px", "background-color": "#0F172A"},
                     "icon": {"color": "#F59E0B", "font-size": "16px"},
