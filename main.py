@@ -56,7 +56,7 @@ if not st.session_state["authenticated"]:
 else:
     role = st.session_state.get("user_role", "admin")
     
-    # --- BARRE LATÉRALE ET MENU DE NAVIGATION ---
+    # --- BARRE LATÉRALE ET VOTRE ANCIEN MENU DE NAVIGATION ---
     with st.sidebar:
         if os.path.exists("Logo CSP-RAHMAT-FH.png"):
             st.image("Logo CSP-RAHMAT-FH.png", width=80)
@@ -66,25 +66,22 @@ else:
         
         st.divider()
         
-        st.markdown("### 🧭 Menu Principal")
+        st.markdown("### 🧭 Navigation")
         
-        # Choix du module selon le rôle
-        if role == "parent":
-            menu = st.radio("Navigation", ["Espace Parent", "Bulletins & Notes"])
-        else:
-            menu = st.selectbox(
-                "Sélectionner un module",
-                [
-                    "🏠 Tableau de Bord",
-                    "👥 Gestion des Élèves",
-                    "📝 Saisie & Notes",
-                    "📊 Bulletins & Classes",
-                    "💳 Cartes Scolaires",
-                    "💰 Gestion Financière",
-                    "🏫 Emplois du Temps",
-                    "📋 Suivi des Programmes"
-                ]
-            )
+        # Votre menu d'origine restauré
+        menu = st.radio(
+            "Modules",
+            [
+                "🏠 Tableau de Bord",
+                "👥 Gestion des Élèves",
+                "📝 Notes & Évaluations",
+                "📊 Bulletins & Classes",
+                "💳 Cartes Scolaires",
+                "💰 Gestion Financière",
+                "🏫 Emplois du Temps",
+                "📋 Suivi des Programmes"
+            ]
+        )
         
         st.divider()
         
@@ -102,41 +99,41 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # --- ROUTAGE DES MODULES SÉLECTIONNÉS ---
-    if role == "parent":
-        try:
-            from views.parent_space import afficher_espace_parent
-            afficher_espace_parent()
-        except ImportError:
-            st.info("Module Espace Parent en cours de chargement...")
-    else:
-        if menu == "🏠 Tableau de Bord":
-            st.success("Bienvenue sur le tableau de bord général du Complexe Scolaire Rahmat-FH.")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Élèves Inscrits", "---", "Actif")
-            with col2:
-                st.metric("Enseignants", "---", "Actif")
-            with col3:
-                st.metric("Classes", "---", "Actif")
-        elif menu == "👥 Gestion des Élèves":
-            st.header("👥 Gestion des Élèves")
-            st.write("Module d'inscription, de suivi et de gestion des dossiers élèves.")
-        elif menu == "📝 Saisie & Notes":
-            st.header("📝 Saisie des Notes")
-            st.write("Interface d'attribution des notes par matière et par classe.")
-        elif menu == "📊 Bulletins & Classes":
-            st.header("📊 Bulletins & Conseils de Classe")
-            st.write("Génération des bulletins trimestriels et calculs de moyennes.")
-        elif menu == "💳 Cartes Scolaires":
-            st.header("💳 Cartes Scolaires")
-            st.write("Génération et impression des cartes d'identité scolaires.")
-        elif menu == "💰 Gestion Financière":
-            st.header("💰 Gestion Financière & Encaissements")
-            st.write("Suivi des paiements de scolarité et des frais annexes.")
-        elif menu == "🏫 Emplois du Temps":
-            st.header("🏫 Emplois du Temps & Évaluations")
-            st.write("Planification des cours et calendrier des examens.")
-        elif menu == "📋 Suivi des Programmes":
-            st.header("📋 Cahier de Texte & Suivi des Programmes")
-            st.write("Suivi de l'exécution mensuelle des programmes pédagogiques.")
+    # --- ROUTAGE DES DIFFÉRENTES SECTIONS DU MENU ---
+    if menu == "🏠 Tableau de Bord":
+        st.success("Bienvenue sur le tableau de bord général du Complexe Scolaire Rahmat-FH.")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Élèves Inscrits", "---", "Actif")
+        with col2:
+            st.metric("Enseignants", "---", "Actif")
+        with col3:
+            st.metric("Classes", "---", "Actif")
+            
+    elif menu == "👥 Gestion des Élèves":
+        st.header("👥 Gestion des Élèves")
+        st.write("Module d'inscription, de suivi et de gestion des dossiers élèves.")
+        
+    elif menu == "📝 Notes & Évaluations":
+        st.header("📝 Saisie des Notes & Évaluations")
+        st.write("Interface d'attribution des notes par matière et par classe.")
+        
+    elif menu == "📊 Bulletins & Classes":
+        st.header("📊 Bulletins & Conseils de Classe")
+        st.write("Génération des bulletins trimestriels et calculs de moyennes.")
+        
+    elif menu == "💳 Cartes Scolaires":
+        st.header("💳 Cartes Scolaires")
+        st.write("Génération et impression des cartes d'identité scolaires.")
+        
+    elif menu == "💰 Gestion Financière":
+        st.header("💰 Gestion Financière & Encaissements")
+        st.write("Suivi des paiements de scolarité et des frais annexes.")
+        
+    elif menu == "🏫 Emplois du Temps":
+        st.header("🏫 Emplois du Temps & Évaluations")
+        st.write("Planification des cours et calendrier des examens.")
+        
+    elif menu == "📋 Suivi des Programmes":
+        st.header("📋 Cahier de Texte & Suivi des Programmes")
+        st.write("Suivi de l'exécution mensuelle des programmes pédagogiques.")
