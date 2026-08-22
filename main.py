@@ -36,8 +36,11 @@ from database.db_config import engine
 from database.models import Base
 from views.login import afficher_login
 
-# Initialisation sécurisée des tables de la base de données
-Base.metadata.create_all(bind=engine)
+# Initialisation sécurisée des tables pour éviter les plantages de connexion
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    st.warning("⚠️ Connexion à la base de données en cours de rétablissement...")
 
 # --- GESTION DE LA SESSION ET DES PARAMÈTRES URL ---
 if "authenticated" not in st.session_state:
