@@ -5,6 +5,15 @@ from datetime import datetime
 from database.db_config import SessionLocal
 from database.models import User, LogActivite
 
+@st.cache_data(ttl=300)
+def charger_utilisateurs_cache():
+    db = SessionLocal()
+    try:
+        utilisateurs = db.query(User).all()
+        return [{"id": u.id, "username": u.username, "role": u.role} for u in utilisateurs]
+    finally:
+        db.close()
+
 def afficher_gestion_utilisateurs():
     st.subheader("🔐 Gestion des Comptes Utilisateurs")
     
@@ -46,6 +55,7 @@ def afficher_gestion_utilisateurs():
                     ))
                     
                     db.commit()
+                    st.cache_data.clear()  # Vider le cache après l'ajout
                     st.success("✅ Compte utilisateur créé et sécurisé avec succès !")
                     st.rerun()
             else:
@@ -55,9 +65,9 @@ def afficher_gestion_utilisateurs():
     
     # --- ESPACE DE CORRECTION / SUPPRESSION ---
     with st.expander("🛠️ Supprimer un compte utilisateur"):
-        utilisateurs = db.query(User).all()
-        if utilisateurs:
-            options_u = {f"{u.username} ({u.role})": u.id for u in utilisateurs}
+        utilisateurs_liste = charger_utilisateurs_cache()
+        if utilisateurs_liste:
+            options_u = {f"{u['username']} ({u['role']})": u['id'] for u in utilisateurs_liste}
             choix_u = st.selectbox("Sélectionner le compte à supprimer", list(options_u.keys()))
             
             if st.button("🗑️ Supprimer définitivement ce compte", type="primary"):
@@ -74,6 +84,7 @@ def afficher_gestion_utilisateurs():
                     ))
                     db.delete(u_obj)
                     db.commit()
+                    st.cache_data.clear()  # Vider le cache après suppression
                     st.success(f"✅ Le compte '{u_obj.username}' a été supprimé.")
                     st.rerun()
         else:
@@ -81,15 +92,17 @@ def afficher_gestion_utilisateurs():
 
     st.markdown("---")
     
-    # --- LISTE DES COMPTES ---
+    # --- LISTE DES COMPTES (Via le cache) ---
     st.write("### 📋 Liste des utilisateurs")
-    tous_users = db.query(User).all()
+    tous_users = charger_utilisateurs_cache()
     if tous_users:
         data = [{
-            "ID": u.id,
-            "Utilisateur": u.username,
-            "Rôle": u.role
+            "ID": u["id"],
+            "Utilisateur": u["username"],
+            "Rôle": u["role"]
         } for u in tous_users]
         st.dataframe(pd.DataFrame(data), use_container_width=True)
+    else:
+        st.info("Aucun utilisateur enregistré pour le moment.")
         
     db.close()

@@ -3,7 +3,16 @@ import bcrypt
 from database.db_config import SessionLocal
 from database.models import User
 
-def afficher_gestion_comptes():
+@st.cache_data(ttl=300)
+def charger_utilisateurs_cache():
+    db = SessionLocal()
+    try:
+        users = db.query(User.id, User.username, User.role).all()
+        return [{"id": u.id, "username": u.username, "role": u.role} for u in users]
+    finally:
+        db.close()
+
+def afficher_gestion_utilisateurs():
     st.subheader("👥 Gestion des Comptes (Parents & Profs)")
     db = SessionLocal()
 
@@ -22,10 +31,16 @@ def afficher_gestion_comptes():
                 nouveau_user = User(username=username, password=hashed, role=role)
                 db.add(nouveau_user)
                 db.commit()
+                st.cache_data.clear()  # Vider le cache après l'ajout d'un utilisateur
                 st.success(f"Compte {role} créé avec succès !")
+                st.rerun()
     
     st.write("---")
     st.write("Liste des comptes existants")
-    users = db.query(User).all()
-    st.table([{"ID": u.id, "User": u.username, "Rôle": u.role} for u in users])
+    users = charger_utilisateurs_cache()
+    if users:
+        st.table([{"ID": u["id"], "User": u["username"], "Rôle": u["role"]} for u in users])
+    else:
+        st.info("Aucun compte enregistré.")
+        
     db.close()
