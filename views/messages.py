@@ -1,141 +1,100 @@
 import streamlit as st
 import pandas as pd
-import urllib.parse
 from datetime import datetime
 from database.db_config import SessionLocal
-from database.models import Message, Enseignant, Personnel, Eleve
+from database.models import Message, Eleve, Classe, LogActivite
+import urllib.parse
 
 def afficher_messages(niveau_actif=None):
-    st.subheader(f"💬 Messagerie Directe & Canaux - {niveau_actif}")
-    
+    st.subheader("💬 Centre de Communication & Alertes SMS/WhatsApp")
+    st.markdown("Communiquez instantanément avec les parents d'élèves pour les absences, les notes ou les rappels financiers.")
+
     db = SessionLocal()
-    
-    # Initialisation de l'état pour les liens d'action externe
-    if 'action_link' not in st.session_state: st.session_state['action_link'] = None
-    if 'action_type' not in st.session_state: st.session_state['action_type'] = None
 
-    # Choix du mode hors du formulaire pour une interactivité instantanée
-    mode = st.radio("Type de destinataire", ["Groupe (Diffusion)", "Individuel (Spécifique)"], horizontal=True)
-    
-    with st.form("form_message"):
-        st.write("### Envoyer une communication / un message")
+    tab1, tab2 = st.tabs(["✉️ Envoyer un message", "📋 Historique des messages"])
+
+    with tab1:
+        st.write("### Nouveau message aux parents")
         
-        destinataire_nom = "Inconnu"
-        numero_tel = ""
-        canal = ""
-        form_valid = True
+        eleves = db.query(Eleve).all()
+        if not eleves:
+            st.warning("⚠️ Aucun élève enregistré.")
+            db.close()
+            return
 
-        if mode == "Groupe (Diffusion)":
-            destinataire_nom = st.selectbox("Sélectionner le groupe", ["Tous les parents", "Tous les professeurs", "Tout le personnel"])
-            canal = st.selectbox("Canal de diffusion", ["Espace Parent", "WhatsApp (Groupe)", "Affichage Panneau"])
+        # Option d'envoi (Individuel ou Diffusion générale)
+        mode_envoi = st.radio("Mode de diffusion", ["Élève spécifique", "Diffusion à toute une classe"], horizontal=True)
+
+        if mode_envoi == "Élève spécifique":
+            options_eleves = {f"{e.nom} {e.prenom} (Matricule: {e.matricule})": e for e in eleves}
+            choix_eleve_str = st.selectbox("Sélectionner l'élève", list(options_eleves.keys()))
+            eleve_cible = options_eleves[choix_eleve_str]
+            destinataires = [eleve_cible]
         else:
-            categorie = st.selectbox("Catégorie", ["Parent (Élève)", "Professeur", "Personnel"])
-            
-            if categorie == "Parent (Élève)":
-                liste = db.query(Eleve).filter(Eleve.telephone != None, Eleve.telephone != "").all()
-                if liste:
-                    options = [f"{e.nom} {e.prenom} - {e.telephone}" for e in liste]
-                    selection = st.selectbox("Choisir l'élève (Parent)", options)
-                    if selection:
-                        destinataire_nom = selection.split(" - ")[0]
-                        numero_tel = selection.split(" - ")[1]
-                else:
-                    st.warning("⚠️ Aucun élève n'a de numéro de téléphone enregistré.")
-                    form_valid = False
-                    
-            elif categorie == "Professeur":
-                liste = db.query(Enseignant).filter(Enseignant.telephone != None, Enseignant.telephone != "").all()
-                if liste:
-                    options = [f"{e.nom} {e.prenom} - {e.telephone}" for e in liste]
-                    selection = st.selectbox("Choisir le professeur", options)
-                    if selection:
-                        destinataire_nom = selection.split(" - ")[0]
-                        numero_tel = selection.split(" - ")[1]
-                else:
-                    st.warning("⚠️ Aucun professeur n'a de numéro de téléphone enregistré.")
-                    form_valid = False
-                    
-            else:
-                liste = db.query(Personnel).filter(Personnel.telephone != None, Personnel.telephone != "").all()
-                if liste:
-                    options = [f"{p.nom} {p.prenom} - {p.telephone}" for p in liste]
-                    selection = st.selectbox("Choisir le membre du personnel", options)
-                    if selection:
-                        destinataire_nom = selection.split(" - ")[0]
-                        numero_tel = selection.split(" - ")[1]
-                else:
-                    st.warning("⚠️ Aucun membre du personnel n'a de numéro de téléphone enregistré.")
-                    form_valid = False
-                
-            canal = st.selectbox("Canal direct", ["Espace Parent", "WhatsApp (Direct)", "SMS (Direct)"])
+            classes = db.query(Classe).all()
+            options_classes = {c.nom: c.id for c in classes}
+            if not options_classes:
+                st.warning("⚠️ Aucune classe disponible.")
+                db.close()
+                return
+            classe_nom_choisie = st.selectbox("Sélectionner la classe", list(options_classes.keys()))
+            classe_id = options_classes[classe_nom_choisie]
+            destinataires = db.query(Eleve).filter(Eleve.classe_id == classe_id).all()
 
-        objet = st.text_input("Objet du message")
-        contenu = st.text_area("Contenu du message")
+        sujet = st.selectbox("Objet du message", [
+            "Alerte Absence / Retard", 
+            "Rappel de Paiement de Scolarité", 
+            "Performance Académique / Note", 
+            "Information Générale de l'École"
+        ])
         
-        submitted = st.form_submit_button("Enregistrer et préparer l'envoi")
-        
-        if submitted:
-            if not form_valid and mode == "Individuel (Spécifique)":
-                st.error("❌ Impossible d'envoyer : aucun contact avec un numéro valide n'est sélectionné.")
-            elif objet.strip() and contenu.strip():
-                # 1. Enregistrement officiel de la trace dans la base de données
-                nouveau_msg = Message(
-                    expediteur="Administration",
-                    destinataire=f"{destinataire_nom} ({canal})",
-                    objet=objet,
-                    contenu=contenu,
-                    date=datetime.now().strftime("%Y-%m-%d %H:%M")
-                )
-                db.add(nouveau_msg)
+        contenu = st.text_area("Contenu du message", placeholder="Écrivez votre message ici...")
+
+        if st.button("🚀 Générer les alertes / Envoyer", type="primary", use_container_width=True):
+            if not contenu:
+                st.error("Le contenu du message ne peut pas être vide.")
+            else:
+                date_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+                
+                for eleve in destinataires:
+                    nouveau_msg = Message(
+                        expediteur="Administration CSP RAHMAT-FH",
+                        destinataire=f"Parent de {eleve.nom} {eleve.prenom}",
+                        sujet=sujet,
+                        contenu=contenu,
+                        date=date_str
+                    )
+                    db.add(nouveau_msg)
+                
+                # Traçabilité
+                db.add(LogActivite(
+                    date=date_str,
+                    utilisateur=st.session_state.get('user_role', 'Admin'),
+                    action="ENVOI MESSAGE",
+                    details=f"Diffusion objet: '{sujet}' à {len(destinataires)} destinataire(s)"
+                ))
                 db.commit()
-                st.success("✅ Message archivé en base avec succès !")
-                
-                # 2. Formatage du texte selon le canal
-                if "SMS" in canal:
-                    full_text = f"[{objet}] {contenu}"
-                else:
-                    full_text = f"📢 *{objet}*\n\n{contenu}\n\n(CSP RAHMAT-FH)"
-                    
-                encoded_text = urllib.parse.quote(full_text)
-                
-                # 3. Génération du lien d'action externe (WhatsApp ou SMS)
-                if "WhatsApp" in canal:
-                    if mode == "Individuel (Spécifique)" and numero_tel:
-                        st.session_state['action_link'] = f"https://wa.me/{numero_tel}?text={encoded_text}"
-                    else:
-                        st.session_state['action_link'] = f"https://wa.me/?text={encoded_text}"
-                    st.session_state['action_type'] = "WhatsApp"
-                elif "SMS" in canal and numero_tel:
-                    st.session_state['action_link'] = f"sms:{numero_tel}?body={encoded_text}"
-                    st.session_state['action_type'] = "SMS"
-                else:
-                    st.session_state['action_link'] = None
-                    st.session_state['action_type'] = None
-            else:
-                st.warning("⚠️ Veuillez remplir tous les champs.")
+                st.success(f"✅ Messages enregistrés avec succès pour {len(destinataires)} élève(s) !")
 
-    # Affichage du bouton d'action externe (hors formulaire)
-    if st.session_state['action_link']:
-        st.markdown("---")
-        if st.session_state['action_type'] == "WhatsApp":
-            st.info(f"🚀 Prêt à envoyer sur WhatsApp vers : **{numero_tel if mode == 'Individuel (Spécifique)' else 'Groupe'}**")
-            st.link_button("👉 Ouvrir WhatsApp", st.session_state['action_link'])
-        elif st.session_state['action_type'] == "SMS":
-            st.info(f"📱 Prêt à envoyer par SMS vers le numéro : **{numero_tel}**")
-            st.link_button("👉 Ouvrir l'application SMS", st.session_state['action_link'])
-            
-        if st.button("Fermer l'action"):
-            st.session_state['action_link'] = None
-            st.session_state['action_type'] = None
-            st.rerun()
+                if len(destinataires) == 1 and destinataires[0].telephone:
+                    tel = destinataires[0].telephone
+                    texte_wa = urllib.parse.quote(f"CSP RAHMAT-FH - {sujet}\n\n{contenu}")
+                    url_whatsapp = f"https://wa.me/{tel}?text={texte_wa}"
+                    st.markdown(f"📱 **[Cliquer ici pour envoyer l'alerte par WhatsApp directement au parent ({tel})]({url_whatsapp})**", unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.write("### 📨 Historique des messages et diffusions")
-    messages = db.query(Message).order_by(Message.id.desc()).all()
-    if messages:
-        data = [{"Date": m.date, "Destinataire": m.destinataire, "Objet": m.objet, "Contenu": m.contenu} for m in messages]
-        st.dataframe(pd.DataFrame(data), use_container_width=True)
-    else:
-        st.info("Aucun message enregistré pour le moment.")
-        
+    with tab2:
+        st.write("### Historique des communications")
+        messages = db.query(Message).order_by(Message.id.desc()).all()
+        if messages:
+            data = [{
+                "Date": m.date,
+                "De": m.expediteur,
+                "À": m.destinataire,
+                "Sujet": m.sujet,
+                "Contenu": m.contenu
+            } for m in messages]
+            st.dataframe(pd.DataFrame(data), use_container_width=True, hide_index=True)
+        else:
+            st.info("Aucun message dans l'historique.")
+
     db.close()
