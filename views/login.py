@@ -4,61 +4,86 @@ from database.models import User
 import bcrypt
 
 def afficher_login():
-    # Injection de CSS personnalisé pour colorer et embellir la page de connexion
+    # Design CSS ultra-moderne, professionnel et captivant
     st.markdown("""
         <style>
-            /* Fond général de la page de connexion */
+            /* Masquer les éléments superflus de Streamlit sur la page de login */
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            
+            /* Fond de page immersif aux teintes académiques d'élite */
             .stApp {
-                background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #334155 100%);
+                background: radial-gradient(circle at 50% 20%, #1E293B 0%, #0F172A 100%);
             }
-            /* Style de la carte de connexion */
-            .login-card {
-                background: rgba(255, 255, 255, 0.95);
-                padding: 2.5rem;
-                border-radius: 20px;
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-                border: 1px solid rgba(255, 255, 255, 0.2);
+            
+            /* Carte de connexion élégante avec effet verre et ombre portée raffinée */
+            .auth-card {
+                background: rgba(30, 41, 59, 0.7);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 2.8rem 2.5rem;
+                border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             }
-            .login-title {
-                color: #0F172A;
+            
+            /* Typographie des titres */
+            .auth-title {
+                color: #FFFFFF;
                 font-weight: 800;
-                font-size: 1.7rem;
+                font-size: 1.5rem;
                 text-align: center;
-                margin-bottom: 0.2rem;
+                margin-top: 0.5rem;
+                letter-spacing: -0.5px;
             }
-            .login-subtitle {
-                color: #64748B;
-                font-size: 0.9rem;
+            .auth-subtitle {
+                color: #94A3B8;
+                font-size: 0.85rem;
                 text-align: center;
-                margin-bottom: 1.5rem;
-                font-weight: 500;
+                margin-bottom: 2rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 600;
+            }
+            
+            /* Personnalisation des étiquettes de formulaires */
+            label {
+                color: #E2E8F0 !important;
+                font-weight: 500 !important;
+                font-size: 0.9rem !important;
             }
         </style>
     """, unsafe_allow_html=True)
 
-    # Espacement vertical pour centrer verticalement
-    st.markdown("<div style='height: 3vh;'></div>", unsafe_allow_html=True)
+    # Espacement vertical pour un centrage parfait sur l'écran
+    st.markdown("<div style='height: 5vh;'></div>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 1.25, 1])
-    
-    with col2:
+    _, col_center, _ = st.columns([1, 1.3, 1])
+
+    with col_center:
         st.markdown("""
-            <div class="login-card">
-                <div style="text-align: center; font-size: 3rem; margin-bottom: 0.5rem;">🏫</div>
-                <div class="login-title">CSP RAHMAT-FH</div>
-                <div class="login-subtitle">Portail Numérique d'Excellence</div>
+            <div class="auth-card">
+                <div style="text-align: center;">
+                    <span style="background: rgba(217, 119, 6, 0.15); border: 1px solid rgba(217, 119, 6, 0.3); padding: 12px; border-radius: 50%; font-size: 1.8rem; display: inline-block; box-shadow: 0 0 20px rgba(217,119,6,0.2);">🏫</span>
+                </div>
+                <div class="auth-title">CSP RAHMAT-FH</div>
+                <div class="auth-subtitle">Espace d'Authentification Sécurisé</div>
         """, unsafe_allow_html=True)
-        
-        with st.form("form_login_stylise"):
-            st.markdown("<label style='font-weight: 600; color: #334155; font-size: 0.9rem;'>Nom d'utilisateur</label>", unsafe_allow_html=True)
-            username = st.text_input("Nom d'utilisateur", placeholder="Entrez votre identifiant...", label_visibility="collapsed")
+
+        with st.form("form_login_premium"):
+            username = st.text_input(
+                "Nom d'utilisateur", 
+                placeholder="Ex: admin ou prof..."
+            )
+            password = st.text_input(
+                "Mot de passe", 
+                type="password", 
+                placeholder="••••••••••••"
+            )
             
-            st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-            st.markdown("<label style='font-weight: 600; color: #334155; font-size: 0.9rem;'>Mot de passe</label>", unsafe_allow_html=True)
-            password = st.text_input("Mot de passe", type="password", placeholder="Entrez votre mot de passe...", label_visibility="collapsed")
-            
-            st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
-            submit = st.form_submit_button("🚀 Se connecter à la session", use_container_width=True)
+            st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+            submit = st.form_submit_button("Se connecter au portail", use_container_width=True)
             
             if submit:
                 db = SessionLocal()
@@ -70,17 +95,19 @@ def afficher_login():
                         st.session_state["user_role"] = user.role
                         st.session_state["user_entity_id"] = user.id
                         st.query_params["logged_in"] = "true"
-                        st.success("✨ Authentification réussie ! Chargement...")
+                        st.success("✨ Accès autorisé. Redirection en cours...")
                         st.rerun()
                     else:
-                        st.error("❌ Identifiant ou mot de passe incorrect.")
+                        st.error("⚠️ Identifiant ou mot de passe incorrect.")
                 finally:
                     db.close()
                     
         st.markdown("</div>", unsafe_allow_html=True)
         
         st.markdown("""
-            <div style="text-align: center; margin-top: 1.5rem;">
-                <p style="color: #94A3B8; font-size: 0.8rem;">Sécurité Active • Complexe Scolaire Privé Rahmat-FH</p>
+            <div style="text-align: center; margin-top: 2rem;">
+                <p style="color: #64748B; font-size: 0.8rem; font-weight: 500;">
+                    Plateforme Officielle • Complexe Scolaire Privé Rahmat-FH
+                </p>
             </div>
         """, unsafe_allow_html=True)
