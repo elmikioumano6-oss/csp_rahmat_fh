@@ -1,9 +1,20 @@
 import streamlit as st
 
+@st.cache_data(ttl=600)
+def charger_infos_enseignant():
+    # Données statiques ou pré-chargées mises en cache pour un affichage instantané
+    return {
+        "classes": ["Terminale D", "Terminale A", "Troisième A"],
+        "matieres": ["Mathématiques", "Physique-Chimie", "SVT"]
+    }
+
 def afficher_enseignants():
     st.markdown("### 📱 Espace Enseignant - Mobile First")
     st.markdown("Interface optimisée pour la saisie rapide des notes et des absences.")
     
+    # Récupération rapide via le cache
+    infos = charger_infos_enseignant()
+
     # Indicateurs clés sous forme de colonnes stylisées (cartes natives)
     col1, col2 = st.columns(2)
     with col1:
@@ -33,8 +44,8 @@ def afficher_enseignants():
     st.markdown("#### 📝 Gestion des Évaluations")
     
     # Sélection ergonomique pour smartphone
-    classe_selection = st.selectbox("Sélectionner la classe", ["Terminale D", "Terminale A", "Troisième A"])
-    matiere_selection = st.selectbox("Sélectionner la matière", ["Mathématiques", "Physique-Chimie", "SVT"])
+    classe_selection = st.selectbox("Sélectionner la classe", infos["classes"])
+    matiere_selection = st.selectbox("Sélectionner la matière", infos["matieres"])
     
     # Bouton d'action large (parfait pour le tactile)
     if st.button("🚀 Ouvrir la grille de saisie", use_container_width=True, type="primary"):
