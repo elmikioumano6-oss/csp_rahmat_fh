@@ -27,20 +27,23 @@ def afficher_backup():
 
     # --- SECTION 2 : TÉLÉCHARGEMENT ---
     if db_file and os.path.exists(db_file):
-        with open(db_file, "rb") as f:
-            bytes_data = f.read()
+        try:
+            with open(db_file, "rb") as f:
+                bytes_data = f.read()
 
-        nom_sauvegarde = f"backup_csp_rahmat_{time.strftime('%Y-%m-%d_%H-%M-%S')}.db"
-        
-        st.markdown("### 📥 Exportation")
-        st.download_button(
-            label="Télécharger la BD actuelle (.db)",
-            data=bytes_data,
-            file_name=nom_sauvegarde,
-            mime="application/octet-stream"
-        )
+            nom_sauvegarde = f"backup_csp_rahmat_{time.strftime('%Y-%m-%d_%H-%M-%S')}.db"
+            
+            st.markdown("### 📥 Exportation")
+            st.download_button(
+                label="Télécharger la BD actuelle (.db)",
+                data=bytes_data,
+                file_name=nom_sauvegarde,
+                mime="application/octet-stream"
+            )
+        except Exception as e:
+            st.error(f"Erreur lors de la lecture du fichier de base de données : {e}")
     else:
-        st.error("⚠️ Fichier de base de données introuvable.")
+        st.info("ℹ️ Aucun fichier de base de données SQLite local détecté (mode Cloud / Supabase actif).")
 
     # --- SECTION 3 : RESTAURATION ---
     st.markdown("---")
@@ -53,6 +56,7 @@ def afficher_backup():
         if st.button("🚀 Confirmer l'importation et restaurer"):
             try:
                 cible = db_file if db_file else "database/scolarite.db"
+                os.makedirs(os.path.dirname(cible), exist_ok=True)
                 with open(cible, "wb") as f:
                     f.write(uploaded_file.getbuffer())
                 st.success("✅ Restauration réussie ! Rafraîchissez la page (F5).")
