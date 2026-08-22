@@ -4,6 +4,15 @@ from datetime import datetime
 from database.db_config import SessionLocal
 from database.models import Classe, LogActivite
 
+@st.cache_data(ttl=300)
+def charger_classes_cache():
+    db = SessionLocal()
+    try:
+        classes = db.query(Classe.id, Classe.nom, Classe.cycle, Classe.tarif_scolarite).all()
+        return [{"id": c.id, "nom": c.nom, "cycle": c.cycle, "tarif_scolarite": c.tarif_scolarite} for c in classes]
+    finally:
+        db.close()
+
 def afficher_classes(niveau_actif=None):
     st.subheader(f"🏫 Gestion des Classes - {niveau_actif if niveau_actif else 'Général'}")
     
@@ -44,6 +53,7 @@ def afficher_classes(niveau_actif=None):
                     ))
                     
                     db.commit()
+                    st.cache_data.clear() # Vider le cache pour actualiser l'affichage
                     st.success("✅ Classe enregistrée avec succès !")
                     st.rerun()
             else:
@@ -61,7 +71,6 @@ def afficher_classes(niveau_actif=None):
             c_obj = db.query(Classe).filter(Classe.id == c_id).first()
             
             if c_obj:
-                # ICI : Le choix entre Modifier ou Supprimer a bien été ajouté
                 action_type = st.radio("Action à effectuer", ["Modifier", "Supprimer"], horizontal=True, key="radio_action_classe")
                 
                 if action_type == "Modifier":
@@ -92,6 +101,7 @@ def afficher_classes(niveau_actif=None):
                                         details=f"Modification de la classe ID {c_obj.id}: '{ancien_nom}' -> '{c_obj.nom}' ({nouveau_cycle}) - Tarif: {nouveau_tarif:,.0f} FCFA"
                                     ))
                                     db.commit()
+                                    st.cache_data.clear() # Vider le cache après modification
                                     st.success(f"✅ La classe '{c_obj.nom}' a été mise à jour avec succès.")
                                     st.rerun()
                             else:
@@ -108,6 +118,7 @@ def afficher_classes(niveau_actif=None):
                         ))
                         db.delete(c_obj)
                         db.commit()
+                        st.cache_data.clear() # Vider le cache après suppression
                         st.success(f"✅ La classe '{nom_classe}' a été supprimée avec succès.")
                         st.rerun()
         else:
@@ -115,15 +126,15 @@ def afficher_classes(niveau_actif=None):
 
     st.markdown("---")
     
-    # --- LISTE DES CLASSES ---
+    # --- LISTE DES CLASSES (Via le cache pour une vitesse maximale) ---
     st.write("### 📋 Liste des classes")
-    toutes_classes = db.query(Classe).all()
+    toutes_classes = charger_classes_cache()
     if toutes_classes:
         data = [{
-            "ID": c.id,
-            "Nom de la classe": c.nom,
-            "Cycle": c.cycle,
-            "Tarif Scolarité (FCFA)": f"{c.tarif_scolarite:,.0f}".replace(",", " ") if c.tarif_scolarite else "0"
+            "ID": c["id"],
+            "Nom de la classe": c["nom"],
+            "Cycle": c["cycle"],
+            "Tarif Scolarité (FCFA)": f"{c['tarif_scolarite']:,.0f}".replace(",", " ") if c["tarif_scolarite"] else "0"
         } for c in toutes_classes]
         st.dataframe(pd.DataFrame(data), use_container_width=True)
     else:
