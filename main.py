@@ -265,6 +265,7 @@ from views.photos_masse import afficher_import_photos_masse
 from views.planification import afficher_planification
 from views.presence import afficher_presence
 from views.rapports import afficher_rapports
+from views.soldes_impayes import afficher_soldes_impayes
 from views.stats_encaissements import afficher_stats_encaissements
 from views.supervision_cahier import afficher_supervision_cahier
 from views.supervision_progression import afficher_supervision_progression
@@ -459,7 +460,7 @@ def main():
         elif page == "Stats Encaissements":
             afficher_stats_encaissements(niveau_actif)
         elif page == "Soldes & Impayés":
-            afficher_soldes_impayes(niveau_actif) if "afficher_soldes_impayes" in globals() else st.info("Module en cours")
+            afficher_soldes_impayes(niveau_actif)
         elif page == "Tableau Finances":
             afficher_tableau_finances(niveau_actif)
         elif page == "Dépenses":
