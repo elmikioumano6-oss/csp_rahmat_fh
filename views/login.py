@@ -16,28 +16,31 @@ def afficher_login():
                 background: linear-gradient(135deg, #0B132B 0%, #1C2541 50%, #581C25 100%);
             }
             
+            /* Boîte de connexion plus étroite et centrée */
             .auth-card {
                 background: rgba(15, 23, 42, 0.95);
                 backdrop-filter: blur(16px);
                 border: 1px solid rgba(220, 38, 38, 0.3);
-                padding: 2.5rem 2rem;
+                padding: 2rem 1.5rem;
                 border-radius: 20px;
                 box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+                max-width: 400px;
+                margin: 0 auto;
             }
             
             .auth-title {
                 color: #F8FAFC;
                 font-weight: 800;
-                font-size: 1.5rem;
+                font-size: 1.35rem;
                 text-align: center;
-                margin-top: 0.5rem;
+                margin-top: 0.3rem;
                 letter-spacing: -0.5px;
             }
             .auth-subtitle {
                 color: #EF4444;
-                font-size: 0.8rem;
+                font-size: 0.75rem;
                 text-align: center;
-                margin-bottom: 1.5rem;
+                margin-bottom: 1.2rem;
                 text-transform: uppercase;
                 letter-spacing: 1.5px;
                 font-weight: 700;
@@ -48,8 +51,8 @@ def afficher_login():
                 color: #FFFFFF !important;
                 border: 1px solid #334155 !important;
                 border-radius: 8px !important;
-                padding: 8px 12px !important;
-                font-size: 0.9rem !important;
+                padding: 7px 10px !important;
+                font-size: 0.85rem !important;
             }
             .stTextInput input:focus {
                 border-color: #EF4444 !important;
@@ -59,7 +62,7 @@ def afficher_login():
             label {
                 color: #EF4444 !important;
                 font-weight: 700 !important;
-                font-size: 1rem !important;
+                font-size: 0.95rem !important;
             }
             
             .stButton button {
@@ -68,7 +71,7 @@ def afficher_login():
                 font-weight: 600 !important;
                 border-radius: 8px !important;
                 border: none !important;
-                padding: 0.5rem 1rem !important;
+                padding: 0.45rem 1rem !important;
                 transition: all 0.3s ease;
             }
             .stButton button:hover {
@@ -78,36 +81,36 @@ def afficher_login():
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div style='height: 4vh;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 5vh;'></div>", unsafe_allow_html=True)
 
-    _, col_center, _ = st.columns([1, 1.15, 1])
+    # Colonnes plus larges sur les côtés pour affiner la carte centrale
+    _, col_center, _ = st.columns([1.5, 1, 1.5])
 
     with col_center:
         st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
         
-        # --- CHARGEMENT DU LOGO DE L'ÉCOLE ---
+        # --- LOGO RÉDUIT ET PROPRE (Sans rectangle vide au-dessus) ---
         try:
             logo_path = "Logo CSP-RAHMAT-FH.png"
             if os.path.exists(logo_path):
                 logo_img = Image.open(logo_path)
-                col_l1, col_l2, col_l3 = st.columns([1, 1.5, 1])
-                with col_l2:
-                    st.image(logo_img, use_container_width=True)
+                # Affichage direct et centré de l'image avec une largeur limitée
+                st.image(logo_img, width=85)
             else:
-                st.markdown("<div style='text-align: center; font-size: 2.5rem; margin-bottom: 10px;'>🏫</div>", unsafe_allow_html=True)
+                st.markdown("<div style='text-align: center; font-size: 2rem; margin-bottom: 5px;'>🏫</div>", unsafe_allow_html=True)
         except Exception:
-            st.markdown("<div style='text-align: center; font-size: 2.5rem; margin-bottom: 10px;'>🏫</div>", unsafe_allow_html=True)
+            st.markdown("<div style='text-align: center; font-size: 2rem; margin-bottom: 5px;'>🏫</div>", unsafe_allow_html=True)
 
         st.markdown("""
                 <div class="auth-title">CSP RAHMAT-FH</div>
                 <div class="auth-subtitle">Portail d'Administration</div>
         """, unsafe_allow_html=True)
 
-        with st.form("form_login_final"):
+        with st.form("form_login_compact"):
             username = st.text_input("Nom d'utilisateur", placeholder="Votre identifiant...")
             password = st.text_input("Mot de passe", type="password", placeholder="••••••••")
             
-            st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
             submit = st.form_submit_button("Se connecter", use_container_width=True)
             
             if submit:
