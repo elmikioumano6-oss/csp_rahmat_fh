@@ -121,7 +121,7 @@ def main():
                 [
                     "Accueil", "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
                     "Personnels et rôles", "Gestion Comptes", "Inscription Élèves", 
-                    "Import Photos en Masse", "Cartes Scolaires", "Espace Profs", 
+                    "Import Photos en Masse", "Cartes Scolaires", "Espace Profs", "Saisie des notes", 
                     "Consultations des notes", "Conseil de classe", "Bulletins", 
                     "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
                     "Emploi du temps", "Planification des évaluations", "Encaissement", 
@@ -130,7 +130,7 @@ def main():
                 ],
                 icons=[
                     "house", "calendar-event", "building", "book", "person-badge", "shield-lock", "people-fill",
-                    "people", "folder-plus", "card-list", "book-half", "journal-text", "people-fill", 
+                    "people", "folder-plus", "card-list", "book-half", "pencil-square", "journal-text", "people-fill", 
                     "file-earmark-text", "eye", "file-earmark-pdf", "graph-up-arrow", "calendar3", 
                     "calendar-check", "cash-coin", "graph-up", "wallet2", "graph-up", "receipt", "file-bar-graph", 
                     "clock-history", "chat-dots", "person-badge", "speedometer", "exclamation-triangle", "hdd-stack"
@@ -252,6 +252,9 @@ def main():
             with tab_p3:
                 from views.cahier_texte import afficher_cahier_texte
                 afficher_cahier_texte(niveau_actif)
+        elif page == "Saisie des notes":
+            from views.notes import afficher_notes
+            afficher_notes(niveau_actif)
         elif page == "Consultations des notes":
             from views.consultation_notes import afficher_consultation_notes
             afficher_consultation_notes(niveau_actif)
