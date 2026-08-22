@@ -75,7 +75,7 @@ class Enseignant(Base):
     specialite = Column(String, nullable=True)
     telephone = Column(String, nullable=True)
     
-    # NOUVEAU : Liaison avec le compte utilisateur de connexion (User)
+    # Liaison avec le compte utilisateur de connexion (User)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True) 
     user = relationship("User")
 
@@ -206,9 +206,6 @@ class PaiementDetail(Base):
     eleve = relationship("Eleve")
 
 
-# ==========================================
-# NOUVEAU : TABLE DES AFFECTATIONS PROFESSEURS
-# ==========================================
 class Affectation(Base):
     __tablename__ = 'affectations'
     id = Column(Integer, primary_key=True, index=True)
