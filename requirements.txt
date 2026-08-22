@@ -1,6 +1,9 @@
 streamlit
-sqlalchemy
-bcrypt
-alembic
 streamlit-option-menu
-psycopg2-binary
+sqlalchemy
+pandas
+bcrypt
+reportlab
+qrcode
+pillow
+python-dotenv
