@@ -2,18 +2,16 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Détecter si l'application tourne sur Streamlit Cloud
-is_cloud = os.path.exists("/mount/src")
+# On force l'utilisation de SQLite pour garantir la stabilité immédiate partout
+is_cloud = False
 
 if is_cloud:
-    # Sur le Cloud : on se connecte à Supabase via les secrets
     SQLALCHEMY_DATABASE_URL = os.getenv(
         "DATABASE_URL", 
         "postgresql://postgres:Rahmatfh2026@db.djwhxbencnyussvhejrx.supabase.co:5432/postgres"
     )
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
 else:
-    # Sur votre PC en local : on utilise SQLite pour éviter les blocages réseau de l'opérateur
     DOSSIER_DB = "database"
     os.makedirs(DOSSIER_DB, exist_ok=True)
     SQLALCHEMY_DATABASE_URL = f"sqlite:///{DOSSIER_DB}/scolarite.db"
