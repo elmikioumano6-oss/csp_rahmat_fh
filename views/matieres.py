@@ -4,6 +4,15 @@ from datetime import datetime
 from database.db_config import SessionLocal
 from database.models import Matiere, LogActivite
 
+@st.cache_data(ttl=300)
+def charger_matieres_cache():
+    db = SessionLocal()
+    try:
+        matieres = db.query(Matiere.id, Matiere.nom, Matiere.coefficient).order_by(Matiere.nom).all()
+        return [{"id": m.id, "nom": m.nom, "coefficient": m.coefficient} for m in matieres]
+    finally:
+        db.close()
+
 def afficher_matieres():
     st.subheader("📚 Gestion des Matières et Coefficients")
     
@@ -39,6 +48,7 @@ def afficher_matieres():
                     ))
                     
                     db.commit()
+                    st.cache_data.clear()  # Vider le cache après l'écriture
                     st.success("✅ Matière enregistrée avec succès !")
                     st.rerun()
             else:
@@ -81,6 +91,7 @@ def afficher_matieres():
                                         details=f"Modification de la matière ID {m_obj.id}: '{ancien_nom}' -> '{m_obj.nom}' (Coeff: {nouveau_coeff})"
                                     ))
                                     db.commit()
+                                    st.cache_data.clear()  # Vider le cache après modification
                                     st.success(f"✅ La matière '{m_obj.nom}' a été mise à jour avec succès.")
                                     st.rerun()
                             else:
@@ -96,6 +107,7 @@ def afficher_matieres():
                         ))
                         db.delete(m_obj)
                         db.commit()
+                        st.cache_data.clear()  # Vider le cache après suppression
                         st.success(f"✅ La matière '{nom_matiere}' a été supprimée avec succès.")
                         st.rerun()
         else:
@@ -103,14 +115,14 @@ def afficher_matieres():
 
     st.markdown("---")
     
-    # --- LISTE DES MATIÈRES ---
+    # --- LISTE DES MATIÈRES (Via le cache pour une vitesse maximale) ---
     st.write("### 📋 Liste des matières")
-    toutes_matieres = db.query(Matiere).order_by(Matiere.nom).all()
+    toutes_matieres = charger_matieres_cache()
     if toutes_matieres:
         data = [{
-            "ID": m.id,
-            "Nom": m.nom,
-            "Coefficient": m.coefficient
+            "ID": m["id"],
+            "Nom": m["nom"],
+            "Coefficient": m["coefficient"]
         } for m in toutes_matieres]
         st.dataframe(pd.DataFrame(data), use_container_width=True)
     else:
