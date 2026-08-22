@@ -42,7 +42,7 @@ finally:
     db_init.close()
 
 # ==========================================
-# MIGRATIONS AUTOMATIQUES RAPIDES (Mises en cache unique)
+# MIGRATIONS AUTOMATIQUES RAPIDES
 # ==========================================
 @st.cache_resource
 def executer_migrations():
@@ -106,7 +106,11 @@ def main():
     annee_libelle = annee.libelle if annee else "Non configurée"
     role = st.session_state.get("user_role", "admin")
 
-    # --- BARRE LATÉRALE : MENU INTÉGRAL ---
+    # Initialisation de la page active dans la session pour éviter les pertes de focus
+    if "current_page" not in st.session_state:
+        st.session_state["current_page"] = "Accueil"
+
+    # --- BARRE LATÉRALE : MENU NATIF ULTRA-STABLE ---
     with st.sidebar:
         st.markdown(
             f"""
@@ -149,13 +153,20 @@ def main():
                 "Stats Encaissements", "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
                 "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord", "Alerte Pédagogique", "Sauvegarde & BD"
             ]
-            page = st.selectbox("Menu Admin", pages_admin, label_visibility="collapsed")
+            
+            # Menu déroulant natif ultra-rapide et indéfectible dans la sidebar
+            page = st.selectbox("Sélectionner une rubrique", pages_admin, key="selectbox_admin_nav", label_visibility="collapsed")
+            st.session_state["current_page"] = page
+
         elif role == "parent":
             st.markdown("<p style='color: #10B981; font-weight: bold; font-size: 0.85rem;'>ESPACE PARENT</p>", unsafe_allow_html=True)
-            page = st.selectbox("Menu Parent", ["Mon Enfant"], label_visibility="collapsed")
+            page = st.selectbox("Menu Parent", ["Mon Enfant"], key="selectbox_parent_nav", label_visibility="collapsed")
+            st.session_state["current_page"] = page
+
         elif role == "prof":
             st.markdown("<p style='color: #F59E0B; font-weight: bold; font-size: 0.85rem;'>ESPACE PROF</p>", unsafe_allow_html=True)
-            page = st.selectbox("Menu Prof", ["Saisie de notes", "Présence", "Cahier de texte"], label_visibility="collapsed")
+            page = st.selectbox("Menu Prof", ["Saisie de notes", "Présence", "Cahier de texte"], key="selectbox_prof_nav", label_visibility="collapsed")
+            st.session_state["current_page"] = page
         else:
             page = "Accueil"
 
@@ -164,6 +175,8 @@ def main():
             st.session_state["authenticated"] = False
             st.query_params.clear() 
             st.rerun()
+
+    page = st.session_state["current_page"]
 
     # --- EN-TÊTE SUPÉRIEUR ÉLÉGANT ---
     st.markdown(
@@ -186,7 +199,7 @@ def main():
     if role == "admin":
         st.markdown("---")
 
-    # --- ROUTAGE AVEC CHARGEMENT DIFFÉRÉ ---
+    # --- ROUTAGE DES VUES ---
     if role == "admin":
         if page == "Accueil":
             from views.accueil import afficher_accueil
