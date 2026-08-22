@@ -2,7 +2,9 @@ import streamlit as st
 
 @st.cache_data(ttl=600)
 def charger_infos_enseignant():
-    # Données statiques ou pré-chargées mises en cache pour un affichage instantané
+    """Récupère les informations des classes et matières en cache."""
+    # Note : Si vous devez récupérer ces données depuis la base de données, 
+    # importez SessionLocal et faites votre requête ici.
     return {
         "classes": ["Terminale D", "Terminale A", "Troisième A"],
         "matieres": ["Mathématiques", "Physique-Chimie", "SVT"]
@@ -15,7 +17,7 @@ def afficher_enseignants():
     # Récupération rapide via le cache
     infos = charger_infos_enseignant()
 
-    # Indicateurs clés sous forme de colonnes stylisées (cartes natives)
+    # Indicateurs clés sous forme de colonnes
     col1, col2 = st.columns(2)
     with col1:
         st.markdown(
@@ -44,9 +46,9 @@ def afficher_enseignants():
     st.markdown("#### 📝 Gestion des Évaluations")
     
     # Sélection ergonomique pour smartphone
-    classe_selection = st.selectbox("Sélectionner la classe", infos["classes"])
-    matiere_selection = st.selectbox("Sélectionner la matière", infos["matieres"])
+    classe_selection = st.selectbox("Sélectionner la classe", infos.get("classes", []))
+    matiere_selection = st.selectbox("Sélectionner la matière", infos.get("matieres", []))
     
-    # Bouton d'action large (parfait pour le tactile)
+    # Bouton d'action large
     if st.button("🚀 Ouvrir la grille de saisie", use_container_width=True, type="primary"):
         st.success(f"Mode saisie activé : {matiere_selection} pour {classe_selection}")
