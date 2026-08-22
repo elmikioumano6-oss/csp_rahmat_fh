@@ -24,16 +24,8 @@ def afficher_login():
                 padding: 2rem 1.5rem;
                 border-radius: 20px;
                 box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-                max-width: 400px;
+                max-width: 380px;
                 margin: 0 auto;
-            }
-            
-            /* Centrage parfait du logo */
-            .logo-container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin-bottom: 0.5rem;
             }
             
             .auth-title {
@@ -96,25 +88,25 @@ def afficher_login():
     with col_center:
         st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
         
-        # --- LOGO CENTRÉ AU-DESSUS DU TITRE ---
-        st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
-        try:
-            logo_path = "Logo CSP-RAHMAT-FH.png"
-            if os.path.exists(logo_path):
-                logo_img = Image.open(logo_path)
-                st.image(logo_img, width=80)
-            else:
-                st.markdown("<div style='font-size: 2rem;'>🏫</div>", unsafe_allow_html=True)
-        except Exception:
-            st.markdown("<div style='font-size: 2rem;'>🏫</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        # --- CENTRAGE STRICT DU LOGO AVEC DES COLONNES INTERNES ÉQUILIBRÉES ---
+        c_left, c_mid, c_right = st.columns([1, 1.2, 1])
+        with c_mid:
+            try:
+                logo_path = "Logo CSP-RAHMAT-FH.png"
+                if os.path.exists(logo_path):
+                    logo_img = Image.open(logo_path)
+                    st.image(logo_img, width=75)
+                else:
+                    st.markdown("<div style='text-align: center; font-size: 2rem;'>🏫</div>", unsafe_allow_html=True)
+            except Exception:
+                st.markdown("<div style='text-align: center; font-size: 2rem;'>🏫</div>", unsafe_allow_html=True)
 
         st.markdown("""
                 <div class="auth-title">CSP RAHMAT-FH</div>
                 <div class="auth-subtitle">Portail d'Administration</div>
         """, unsafe_allow_html=True)
 
-        with st.form("form_login_centre"):
+        with st.form("form_login_parfait"):
             username = st.text_input("Nom d'utilisateur", placeholder="Votre identifiant...")
             password = st.text_input("Mot de passe", type="password", placeholder="••••••••")
             
