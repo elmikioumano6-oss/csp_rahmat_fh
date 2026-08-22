@@ -17,11 +17,14 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 from views.login import afficher_login
 
-# Initialisation de la base de données
-Base.metadata.create_all(bind=engine)
+# Initialisation sécurisée de la base de données
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"Tables déjà existantes ou initialisées : {e}")
 
 # ==========================================
-# AUTO-INITIALISATION DE LA'ADMIN SÉCURISÉ
+# AUTO-INITIALISATION DE L'ADMIN SÉCURISÉ
 # ==========================================
 db_init = SessionLocal()
 try:
