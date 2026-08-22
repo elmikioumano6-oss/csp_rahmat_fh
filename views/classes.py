@@ -53,7 +53,7 @@ def afficher_classes(niveau_actif=None):
                         ))
                         
                         db.commit()
-                        st.cache_data.clear() # Vider le cache pour actualiser l'affichage
+                        st.cache_data.clear()
                         st.success("✅ Classe enregistrée avec succès !")
                 else:
                     st.warning("⚠️ Veuillez indiquer le nom de la classe.")
@@ -100,7 +100,7 @@ def afficher_classes(niveau_actif=None):
                                             details=f"Modification de la classe ID {c_obj.id}: '{ancien_nom}' -> '{c_obj.nom}' ({nouveau_cycle}) - Tarif: {nouveau_tarif:,.0f} FCFA"
                                         ))
                                         db.commit()
-                                        st.cache_data.clear() # Vider le cache après modification
+                                        st.cache_data.clear()
                                         st.success(f"✅ La classe '{c_obj.nom}' a été mise à jour avec succès.")
                                 else:
                                     st.warning("⚠️ Le nom de la classe ne peut pas être vide.")
@@ -116,14 +116,14 @@ def afficher_classes(niveau_actif=None):
                             ))
                             db.delete(c_obj)
                             db.commit()
-                            st.cache_data.clear() # Vider le cache après suppression
+                            st.cache_data.clear()
                             st.success(f"✅ La classe '{nom_classe}' a été supprimée avec succès.")
             else:
                 st.info("Aucune classe enregistrée à modifier ou supprimer.")
 
         st.markdown("---")
         
-        # --- LISTE DES CLASSES (Via le cache pour une vitesse maximale) ---
+        # --- LISTE DES CLASSES ---
         st.write("### 📋 Liste des classes")
         toutes_classes = charger_classes_cache()
         if toutes_classes:

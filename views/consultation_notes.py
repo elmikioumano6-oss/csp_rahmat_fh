@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit_shadcn_ui as ui
 import urllib.parse
 from reportlab.pdfgen import canvas
 import os
@@ -29,9 +28,9 @@ def afficher_consultation_notes(niveau_actif):
         
         col1, col2 = st.columns(2)
         with col1:
-            ui.metric_card(title="Moyenne Trimestrielle", content="14.5 / 20", description="Rang : 3ème / 45", key="eleve_moy")
+            st.metric(label="Moyenne Trimestrielle", value="14.5 / 20", delta="Rang : 3ème / 45")
         with col2:
-            ui.metric_card(title="Assiduité", content="0 Absence", description="Comportement exemplaire", key="eleve_abs")
+            st.metric(label="Assiduité", value="0 Absence", delta="Comportement exemplaire")
         
         st.markdown("---")
         st.markdown("#### 📊 Dernières Notes Enregistrées")
@@ -43,23 +42,17 @@ def afficher_consultation_notes(niveau_actif):
         ]
         
         for n in notes_data:
-            ui.card(
-                title=n["Matière"],
-                content=f"Note : {n['Note']}",
-                description=f"Appréciation : {n['appréciation']}",
-                key=f"note_{n['Matière']}"
-            )
+            with st.container(border=True):
+                st.write(f"**{n['Matière']}**")
+                st.write(f"Note : {n['Note']} | Appréciation : {n['appréciation']}")
 
         st.markdown("---")
         
-        # Bouton d'export PDF
         if st.button("📥 Télécharger le Bulletin PDF"):
             pdf_path = generer_pdf_notes(matricule, notes_data)
             with open(pdf_path, "rb") as f:
                 st.download_button("Cliquez pour valider le téléchargement", f, file_name=pdf_path)
-            # Optionnel : suppression automatique après un court délai ou laisser l'utilisateur gérer
         
-        # Bouton Contact Administration
         email_admin = "direction@rahmat-fh.com"
         subject = f"Question concernant l'élève {matricule}"
         body = "Bonjour, je souhaite avoir des informations concernant le suivi académique de mon enfant."
@@ -71,6 +64,5 @@ def afficher_consultation_notes(niveau_actif):
             '📧 Contacter l\'Administration</div></a>', 
             unsafe_allow_html=True
         )
-
     else:
         st.info("💡 Veuillez entrer un matricule valide pour afficher le bulletin de l'élève.")
