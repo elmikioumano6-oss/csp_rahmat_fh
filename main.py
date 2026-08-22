@@ -271,6 +271,7 @@ from views.supervision_cahier import afficher_supervision_cahier
 from views.supervision_progression import afficher_supervision_progression
 from views.tableau_finances import afficher_tableau_finances
 from views.upload_programmes import afficher_upload_programmes
+from views.tableau_de_bord import afficher_tableau_bord
 
 
 def main():
@@ -328,14 +329,14 @@ def main():
                     "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
                     "Emploi du temps", "Planification des évaluations", "Encaissement", 
                     "Stats Encaissements", "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
-                    "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord",
+                    "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord", "Sauvegarde & BD"
                 ],
                 icons=[
                     "house", "calendar-event", "building", "book", "person-badge", "shield-lock", "people-fill",
                     "people", "folder-plus", "card-list", "book-half", "journal-text", "people-fill", 
                     "file-earmark-text", "eye", "file-earmark-pdf", "graph-up-arrow", "calendar3", 
                     "calendar-check", "cash-coin", "graph-up", "wallet2", "graph-up", "receipt", "file-bar-graph", 
-                    "clock-history", "chat-dots", "person-badge", "speedometer",
+                    "clock-history", "chat-dots", "person-badge", "speedometer", "hdd-stack"
                 ],
                 menu_icon="cast", default_index=0,
                 styles={
@@ -466,7 +467,7 @@ def main():
         elif page == "Dépenses":
             afficher_depenses(niveau_actif)
         elif page == "Rapports":
-            afficher_rapports(niveau_rafactif if 'niveau_rafactif' in locals() else niveau_actif)
+            afficher_rapports(niveau_actif)
         elif page == "Journal d'activité":
             afficher_journal_activite(niveau_actif)
         elif page == "Messages":
@@ -474,6 +475,8 @@ def main():
         elif page == "Espace Parent":
             afficher_espace_parent()
         elif page == "Tableau de bord":
+            afficher_tableau_bord(niveau_actif)
+        elif page == "Sauvegarde & BD":
             afficher_backup()
 
     elif role == "parent":
