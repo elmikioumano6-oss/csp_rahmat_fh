@@ -32,17 +32,17 @@ if logo_base64:
     """, unsafe_allow_html=True)
 
 # --- IMPORTATION DES VUES ET DE LA DB ---
-from database.db_config import init_db
+from database.db_config import engine
+from database.models import Base
 from views.login import afficher_login
 
-# Initialisation de la base de données
-init_db()
+# Initialisation sécurisée des tables de la base de données
+Base.metadata.create_all(bind=engine)
 
 # --- GESTION DE LA SESSION ET DES PARAMÈTRES URL ---
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
-# Vérification des paramètres query de l'URL pour persister la session
 query_params = st.query_params
 if query_params.get("logged_in") == "true":
     st.session_state["authenticated"] = True
@@ -51,10 +51,8 @@ if query_params.get("logged_in") == "true":
 if not st.session_state["authenticated"]:
     afficher_login()
 else:
-    # Si l'utilisateur est connecté, on affiche l'application principale selon son rôle
     role = st.session_state.get("user_role", "admin")
     
-    # Barre latérale de navigation et de déconnexion
     with st.sidebar:
         if os.path.exists("Logo CSP-RAHMAT-FH.png"):
             st.image("Logo CSP-RAHMAT-FH.png", width=80)
@@ -70,7 +68,6 @@ else:
             st.query_params.clear()
             st.rerun()
 
-    # Rendu des différents modules selon le rôle de l'utilisateur connecté
     st.markdown(f"""
         <div style="background: #1E293B; padding: 1.5rem; border-radius: 12px; color: white; margin-bottom: 2rem;">
             <h2>🏫 COMPLEXE SCOLAIRE PRIVÉ RAHMAT-FH</h2>
@@ -79,12 +76,10 @@ else:
     """, unsafe_allow_html=True)
 
     if role == "parent":
-        # Import et affichage de la vue parent
         try:
             from views.parent_space import afficher_espace_parent
             afficher_espace_parent()
         except ImportError:
             st.warning("Module Espace Parent en cours de chargement...")
     else:
-        # Vues administratives et pédagogiques générales
         st.info(f"Bienvenue sur votre tableau de bord. Sélectionnez un module dans le menu de navigation.")
