@@ -1,43 +1,54 @@
 import streamlit as st
 
-# Constantes des rôles
-ROLE_DIRECTEUR = "Directeur"
-ROLE_CENSEUR = "Censeur"
-ROLE_CAISSIER = "Caissier"
-ROLE_PROFESSEUR = "Professeur"
+# Constantes des rôles alignées avec main.py et gestion_utilisateurs.py
+ROLE_ADMIN = "admin"
+ROLE_PROF = "prof"
+ROLE_PARENT = "parent"
 
-# MATRICE D'ACCÈS RBAC (Role-Based Access Control)
+# MATRICE D'ACCÈS RBAC harmonisée
 ACCESS_MATRIX = {
-    # Administration
-    "Paramètres de l'école": [ROLE_DIRECTEUR],
-    "Utilisateurs": [ROLE_DIRECTEUR],
-    "Journal d'activité": [ROLE_DIRECTEUR],
-    
-    # Scolarité
-    "Élèves": [ROLE_DIRECTEUR, ROLE_CENSEUR],
-    "Classes": [ROLE_DIRECTEUR, ROLE_CENSEUR],
-    
-    # Pédagogie
-    "Notes & Bulletins": [ROLE_DIRECTEUR, ROLE_CENSEUR, ROLE_PROFESSEUR],
-    "Enseignants": [ROLE_DIRECTEUR, ROLE_CENSEUR],
-    "Suivi Progressions": [ROLE_DIRECTEUR, ROLE_CENSEUR, ROLE_PROFESSEUR],
-    
-    # Examens
-    "Examens & Anonymat": [ROLE_DIRECTEUR, ROLE_CENSEUR],
-    
-    # Finances
-    "Encaissements": [ROLE_DIRECTEUR, ROLE_CAISSIER],
-    "Soldes & impayés": [ROLE_DIRECTEUR, ROLE_CAISSIER],
-    "Dépenses": [ROLE_DIRECTEUR, ROLE_CAISSIER],
-    "Rapports Financiers": [ROLE_DIRECTEUR, ROLE_CAISSIER],
-    
-    # Transverse
-    "Tableau de bord": [ROLE_DIRECTEUR, ROLE_CENSEUR, ROLE_CAISSIER],
-    "Mon Profil": [ROLE_DIRECTEUR, ROLE_CENSEUR, ROLE_CAISSIER, ROLE_PROFESSEUR]
+    # Tous les accès pour l'administrateur
+    "Accueil": [ROLE_ADMIN],
+    "Année scolaire": [ROLE_ADMIN],
+    "Classes & Tarifs": [ROLE_ADMIN],
+    "Matières & Coeffs": [ROLE_ADMIN],
+    "Enseignants": [ROLE_ADMIN],
+    "Personnels et rôles": [ROLE_ADMIN],
+    "Gestion Comptes": [ROLE_ADMIN],
+    "Inscription Élèves": [ROLE_ADMIN],
+    "Import Photos en Masse": [ROLE_ADMIN],
+    "Cartes Scolaires": [ROLE_ADMIN],
+    "Consultations des notes": [ROLE_ADMIN],
+    "Conseil de classe": [ROLE_ADMIN],
+    "Bulletins": [ROLE_ADMIN],
+    "Supervision cahier": [ROLE_ADMIN],
+    "Import Programmes PDF": [ROLE_ADMIN],
+    "Suivi des Programmes": [ROLE_ADMIN],
+    "Emploi du temps": [ROLE_ADMIN],
+    "Planification des évaluations": [ROLE_ADMIN],
+    "Encaissement": [ROLE_ADMIN],
+    "Stats Encaissements": [ROLE_ADMIN],
+    "Soldes & Impayés": [ROLE_ADMIN],
+    "Tableau Finances": [ROLE_ADMIN],
+    "Dépenses": [ROLE_ADMIN],
+    "Rapports": [ROLE_ADMIN],
+    "Journal d'activité": [ROLE_ADMIN],
+    "Messages": [ROLE_ADMIN],
+    "Tableau de bord": [ROLE_ADMIN],
+    "Alerte Pédagogique": [ROLE_ADMIN],
+    "Sauvegarde & BD": [ROLE_ADMIN],
+
+    # Espace Prof
+    "Saisie de notes": [ROLE_ADMIN, ROLE_PROF],
+    "Présence": [ROLE_ADMIN, ROLE_PROF],
+    "Cahier de texte": [ROLE_ADMIN, ROLE_PROF],
+
+    # Espace Parent
+    "Mon Enfant": [ROLE_ADMIN, ROLE_PARENT]
 }
 
 def get_user_role():
-    return st.session_state.get("role", None)
+    return st.session_state.get("user_role", None)
 
 def has_access(module_name: str) -> bool:
     """Vérifie silencieusement si l'utilisateur possède l'accès"""
