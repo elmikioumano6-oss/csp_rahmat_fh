@@ -1,4 +1,5 @@
 import streamlit as st
+from datetime import datetime
 from database.db_config import SessionLocal
 from database.models import Eleve, PaiementDetail, Classe, Presence
 from sqlalchemy import func
@@ -9,7 +10,15 @@ def charger_donnees_tableau_bord(niveau_actif):
     try:
         total_eleves = db.query(Eleve).join(Classe).filter(Classe.cycle == niveau_actif).count()
         total_encaisse = db.query(func.sum(PaiementDetail.montant)).scalar() or 0
-        absents = db.query(Presence).filter(Presence.statut == "Absent").count()
+        
+        # Filtrer les absents du jour exact
+        date_jour = datetime.today().strftime("%Y-%m-%d")
+        absents = db.query(Presence).join(Eleve).join(Classe).filter(
+            Classe.cycle == niveau_actif,
+            Presence.statut == "Absent",
+            Presence.date == date_jour
+        ).count()
+        
         nb_classes = db.query(Classe).filter(Classe.cycle == niveau_actif).count()
         
         classes = db.query(Classe).filter(Classe.cycle == niveau_actif).all()
