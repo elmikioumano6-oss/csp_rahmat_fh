@@ -9,6 +9,7 @@ from database.models import (
     LogActivite,
     Matiere,
     Note,
+    User,
 )
 import streamlit as st
 
@@ -45,6 +46,7 @@ def afficher_enseignants(niveau_actif=None):
                         "Prénom": e.prenom,
                         "Spécialité": e.specialite or "N/A",
                         "Téléphone": e.telephone or "N/A",
+                        "Compte Utilisateur ID": e.user_id or "Aucun",
                     }
                     for e in enseignants
                 ]
@@ -58,20 +60,30 @@ def afficher_enseignants(niveau_actif=None):
 
         with tab_ajout:
             st.write("### Enregistrer un nouvel enseignant")
+            
+            # Récupérer les comptes ayant le rôle "prof" pour liaison
+            comptes_profs = db.query(User).filter(User.role == "prof").all()
+            compte_options = {"Aucun compte associé": None}
+            for u in comptes_profs:
+                compte_options[f"Compte: {u.username} (ID: {u.id})"] = u.id
+
             with st.form("form_ajout_enseignant", clear_on_submit=True):
                 nom = st.text_input("Nom de l'enseignant")
                 prenom = st.text_input("Prénom de l'enseignant")
                 specialite = st.text_input("Spécialité (ex: Mathématiques, Histoire...)")
                 telephone = st.text_input("Numéro de téléphone")
+                sel_compte_label = st.selectbox("Lier à un Compte Utilisateur (Rôle Prof)", list(compte_options.keys()))
 
                 submitted = st.form_submit_button("Enregistrer l'enseignant")
                 if submitted:
                     if nom.strip() and prenom.strip():
+                        user_id_associe = compte_options[sel_compte_label]
                         nouveau_prof = Enseignant(
                             nom=nom.strip().upper(),
                             prenom=prenom.strip(),
                             specialite=specialite.strip(),
                             telephone=telephone.strip(),
+                            user_id=user_id_associe,
                         )
                         db.add(nouveau_prof)
                         db.add(
@@ -81,12 +93,12 @@ def afficher_enseignants(niveau_actif=None):
                                     "username", "Admin"
                                 ),
                                 action="AJOUT ENSEIGNANT",
-                                details=f"Ajout de {nom} {prenom}",
+                                details=f"Ajout de {nom} {prenom} avec compte ID: {user_id_associe}",
                             )
                         )
                         db.commit()
                         st.success(
-                            "✅ Enseignant enregistré avec succès !"
+                            "✅ Enseignant enregistré et lié à son compte avec succès !"
                         )
                         st.rerun()
                     else:
@@ -134,9 +146,23 @@ def afficher_espace_prof_dedie():
 
     db = SessionLocal()
     try:
-        enseignant = db.query(Enseignant).first()
+        current_username = st.session_state.get("username", "")
+        current_user_id = st.session_state.get("user_entity_id")
+
+        # Recherche de l'enseignant connecté par son user_id ou son nom
+        enseignant = None
+        if current_user_id:
+            enseignant = db.query(Enseignant).filter(Enseignant.user_id == current_user_id).first()
+        
         if not enseignant:
-            st.warning("⚠️ Aucun profil enseignant associé.")
+            enseignant = db.query(Enseignant).filter(Enseignant.nom.ilike(f"%{current_username}%")).first()
+            
+        if not enseignant:
+            # Fallback de secours si aucun lien direct n'est trouvé
+            enseignant = db.query(Enseignant).first()
+
+        if not enseignant:
+            st.warning("⚠️ Aucun profil enseignant n'est associé à votre compte utilisateur. Contactez l'administrateur.")
             return
 
         st.markdown(
@@ -225,6 +251,7 @@ def afficher_espace_prof_dedie():
                 db.query(Eleve)
                 .filter(Eleve.classe_id == classe_id_selectionnee)
                 .order_by(Eleve.nom)
+                .all()
             )
             semestre = st.selectbox("Semestre", [1, 2], key="sem_prof_n")
 
