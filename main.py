@@ -43,172 +43,32 @@ finally:
     db_init.close()
 
 # ==========================================
-# MIGRATIONS AUTOMATIQUES (Uniquement pour SQLite en local)
+# MIGRATIONS AUTOMATIQUES RAPIDES (Mises en cache unique)
 # ==========================================
-if "sqlite" in str(engine.url):
-    with engine.connect() as connection:
-        # Table notes
-        try:
-            res = connection.execute(text("PRAGMA table_info(notes);")).fetchall()
-            cols = [row[1] for row in res]
-            if "semestre" not in cols:
-                connection.execute(
-                    text("ALTER TABLE notes ADD COLUMN semestre INTEGER DEFAULT 1;")
-                )
+@st.cache_resource
+def executer_migrations():
+    if "sqlite" in str(engine.url):
+        with engine.connect() as connection:
+            try:
+                res = connection.execute(text("PRAGMA table_info(notes);")).fetchall()
+                cols = [row[1] for row in res]
+                if "semestre" not in cols:
+                    connection.execute(text("ALTER TABLE notes ADD COLUMN semestre INTEGER DEFAULT 1;"))
+                    connection.commit()
+            except Exception: pass
+            
+            try:
+                res = connection.execute(text("PRAGMA table_info(classes);")).fetchall()
+                cols = [row[1] for row in res]
+                if "cycle" not in cols:
+                    connection.execute(text("ALTER TABLE classes ADD COLUMN cycle TEXT;"))
+                if "tarif_scolarite" not in cols:
+                    connection.execute(text("ALTER TABLE classes ADD COLUMN tarif_scolarite FLOAT DEFAULT 0.0;"))
                 connection.commit()
-        except Exception:
-            pass
+            except Exception: pass
+    return True
 
-        # Table classes
-        try:
-            res = connection.execute(text("PRAGMA table_info(classes);")).fetchall()
-            cols = [row[1] for row in res]
-            if "cycle" not in cols:
-                connection.execute(
-                    text("ALTER TABLE classes ADD COLUMN cycle TEXT;")
-                )
-            if "tarif_scolarite" not in cols:
-                connection.execute(
-                    text(
-                        "ALTER TABLE classes ADD COLUMN tarif_scolarite FLOAT DEFAULT 0.0;"
-                    )
-                )
-            connection.commit()
-        except Exception:
-            pass
-
-        # Table enseignants
-        try:
-            res = connection.execute(
-                text("PRAGMA table_info(enseignants);")
-            ).fetchall()
-            cols = [row[1] for row in res]
-            if "specialite" not in cols:
-                connection.execute(
-                    text("ALTER TABLE enseignants ADD COLUMN specialite TEXT;")
-                )
-                connection.commit()
-        except Exception:
-            pass
-
-        # Table eleves (SÉCURISATION INDIVIDUELLE DES COLONNES)
-        try:
-            connection.execute(
-                text("ALTER TABLE eleves ADD COLUMN telephone TEXT;")
-            )
-            connection.commit()
-        except Exception:
-            pass
-
-        try:
-            connection.execute(
-                text(
-                    "ALTER TABLE eleves ADD COLUMN montant_reduction FLOAT DEFAULT 0.0;"
-                )
-            )
-            connection.commit()
-        except Exception:
-            pass
-
-        try:
-            connection.execute(text("ALTER TABLE eleves ADD COLUMN photo TEXT;"))
-            connection.commit()
-        except Exception:
-            pass
-
-        try:
-            connection.execute(text("ALTER TABLE eleves ADD COLUMN parent_id INTEGER;"))
-            connection.commit()
-        except Exception:
-            pass
-
-        # Table programmes (Migration automatique de la colonne document_pdf)
-        try:
-            res = connection.execute(
-                text("PRAGMA table_info(programmes);")
-            ).fetchall()
-            cols = [row[1] for row in res]
-            if "document_pdf" not in cols:
-                connection.execute(
-                    text("ALTER TABLE programmes ADD COLUMN document_pdf TEXT;")
-                )
-                connection.commit()
-        except Exception:
-            pass
-
-        # Table echeances_paiement
-        try:
-            res = connection.execute(
-                text("PRAGMA table_info(echeances_paiement);")
-            ).fetchall()
-            cols = [row[1] for row in res]
-            if "eleve_id" not in cols:
-                connection.execute(
-                    text("ALTER TABLE echeances_paiement ADD COLUMN eleve_id INTEGER;")
-                )
-            if "libelle" not in cols:
-                connection.execute(
-                    text(
-                        "ALTER TABLE echeances_paiement ADD COLUMN libelle TEXT DEFAULT 'Scolarité';"
-                    )
-                )
-            if "montant" not in cols:
-                connection.execute(
-                    text(
-                        "ALTER TABLE echeances_paiement ADD COLUMN montant FLOAT DEFAULT 0.0;"
-                    )
-                )
-            if "montant_total" not in cols:
-                connection.execute(
-                    text(
-                        "ALTER TABLE echeances_paiement ADD COLUMN montant_total FLOAT DEFAULT 0.0;"
-                    )
-                )
-            if "montant_paye" not in cols:
-                connection.execute(
-                    text(
-                        "ALTER TABLE echeances_paiement ADD COLUMN montant_paye FLOAT DEFAULT 0.0;"
-                    )
-                )
-            connection.commit()
-        except Exception:
-            pass
-
-        # Table paiements_details
-        try:
-            res = connection.execute(
-                text("PRAGMA table_info(paiements_details);")
-            ).fetchall()
-            cols = [row[1] for row in res]
-            if "echeance_id" not in cols:
-                connection.execute(
-                    text(
-                        "ALTER TABLE paiements_details ADD COLUMN echeance_id INTEGER;"
-                    )
-                )
-            if "eleve_id" not in cols:
-                connection.execute(
-                    text(
-                        "ALTER TABLE paiements_details ADD COLUMN eleve_id INTEGER;"
-                    )
-                )
-            if "montant" not in cols:
-                connection.execute(
-                    text(
-                        "ALTER TABLE paiements_details ADD COLUMN montant FLOAT DEFAULT 0.0;"
-                    )
-                )
-            if "date" not in cols:
-                connection.execute(
-                    text("ALTER TABLE paiements_details ADD COLUMN date TEXT;")
-                )
-            if "mode" not in cols:
-                connection.execute(
-                    text("ALTER TABLE paiements_details ADD COLUMN mode TEXT;")
-                )
-            connection.commit()
-        except Exception:
-            pass
+executer_migrations()
 
 # ==========================================
 # CONFIGURATION DE LA PAGE AVEC LOGO
@@ -216,7 +76,7 @@ if "sqlite" in str(engine.url):
 try:
     icone_ecole = Image.open("Logo CSP-RAHMAT-FH.png")
 except Exception:
-    icone_ecole = "🏫"  # Icône par défaut si l'image n'est pas trouvée
+    icone_ecole = "🏫"
 
 st.set_page_config(
     page_title="CSP RAHMAT-FH - Gestion d'Élite",
@@ -233,7 +93,6 @@ if "authenticated" not in st.session_state:
     st.session_state["user_role"] = "admin"
     st.session_state["user_entity_id"] = None
 
-# Vérification du témoin de session dans l'URL pour persister après F5
 if st.query_params.get("logged_in") == "true":
     st.session_state["authenticated"] = True
 
@@ -250,7 +109,6 @@ def main():
 
     # --- BARRE LATÉRALE : MENU INTÉGRAL ---
     with st.sidebar:
-        # Badge de Session
         st.markdown(
             f"""
             <div style="text-align: center; padding: 10px 0;">
@@ -263,14 +121,8 @@ def main():
             unsafe_allow_html=True,
         )
 
-        # Affichage de la date et l'heure en français
-        jours = [
-            "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche",
-        ]
-        mois = [
-            "", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", 
-            "Août", "Septembre", "Octobre", "Novembre", "Décembre",
-        ]
+        jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+        mois = ["", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
         now = datetime.now()
         date_str = f"{jours[now.weekday()]} {now.day} {mois[now.month]} {now.year}"
         heure_str = now.strftime("%H:%M")
@@ -372,13 +224,11 @@ def main():
         unsafe_allow_html=True,
     )
 
-    niveau_actif = st.selectbox(
-        "🎯 Cycle Actif :", ["Primaire", "Collège", "Lycée"], index=1
-    )
+    niveau_actif = st.selectbox("🎯 Cycle Actif :", ["Primaire", "Collège", "Lycée"], index=1)
     if role == "admin":
         st.markdown("---")
 
-    # --- ROUTAGE AVEC CHARGEMENT DIFFÉRÉ (LAZY LOADING) ---
+    # --- ROUTAGE AVEC CHARGEMENT DIFFÉRÉ ---
     if role == "admin":
         if page == "Accueil":
             from views.accueil import afficher_accueil
@@ -388,7 +238,7 @@ def main():
             afficher_annee_scolaire()
         elif page == "Classes & Tarifs":
             from views.classes import afficher_classes
-            afficher_classes()
+            afficher_classes(niveau_actif)
         elif page == "Matières & Coeffs":
             from views.matieres import afficher_matieres
             afficher_matieres()

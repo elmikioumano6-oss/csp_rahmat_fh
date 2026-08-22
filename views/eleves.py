@@ -2,29 +2,56 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from database.db_config import SessionLocal
-# J'ai ajouté User ici
 from database.models import Eleve, Classe, LogActivite, User 
+
+@st.cache_data(ttl=300)
+def charger_donnees_eleves_cache(niveau_actif):
+    db = SessionLocal()
+    try:
+        parents = db.query(User.id, User.username).filter(User.role == 'parent').all()
+        classes = db.query(Classe.id, Classe.nom).filter(Classe.cycle == niveau_actif).all()
+        
+        eleves_query = db.query(Eleve).join(Classe).filter(Classe.cycle == niveau_actif).order_by(Eleve.nom).all()
+        eleves_data = [{
+            "id": e.id,
+            "matricule": e.matricule,
+            "nom": e.nom,
+            "prenom": e.prenom,
+            "sexe": e.sexe,
+            "telephone": e.telephone,
+            "classe_id": e.classe_id,
+            "classe_nom": e.classe.nom if e.classe else "N/A",
+            "parent_id": e.parent_id,
+            "parent_nom": e.parent.username if e.parent else "Aucun"
+        } for e in eleves_query]
+
+        return {
+            "parents": {p.username: p.id for p in parents},
+            "classes": {c.nom: c.id for c in classes},
+            "eleves": eleves_data
+        }
+    finally:
+        db.close()
 
 def afficher_eleves(niveau_actif=None):
     st.subheader(f"👥 Inscription et Gestion des Élèves - {niveau_actif}")
     
     db = SessionLocal()
     
-    # Récupération des parents pour le menu déroulant
-    parents = db.query(User).filter(User.role == 'parent').all()
-    parent_options = {p.username: p.id for p in parents}
+    # Chargement rapide via le cache
+    donnees_cache = charger_donnees_eleves_cache(niveau_actif)
+    parent_options = donnees_cache["parents"]
+    options_classes = donnees_cache["classes"]
     
     # --- FORMULAIRE D'INSCRIPTION ---
     with st.form("form_inscription_eleve"):
         st.write("### Inscrire un nouvel élève")
         
-        classes = db.query(Classe).filter(Classe.cycle == niveau_actif).all()
-        if not classes:
+        if not options_classes:
             st.warning(f"⚠️ Veuillez d'abord créer des classes pour le cycle {niveau_actif}.")
             db.close()
             return
             
-        options_classes = {c.nom: c.id for c in classes}
         classe_nom = st.selectbox("Classe", list(options_classes.keys()))
         classe_id = options_classes[classe_nom]
         
@@ -39,7 +66,6 @@ def afficher_eleves(niveau_actif=None):
             telephone = st.text_input("Téléphone (Contact)")
             montant_reduction = st.number_input("Montant de réduction (FCFA)", min_value=0.0, step=1000.0)
             
-            # NOUVEAU : Sélecteur de parent
             parent_select = st.selectbox(
                 "Assigner un compte parent (Optionnel)", 
                 ["Aucun"] + list(parent_options.keys())
@@ -52,8 +78,7 @@ def afficher_eleves(niveau_actif=None):
                 if existe:
                     st.error("❌ Ce matricule existe déjà dans la base de données.")
                 else:
-                    # Logique pour le parent_id
-                    parent_id = parent_options.get(parent_select) # Retourne l'ID ou None si "Aucun"
+                    parent_id = parent_options.get(parent_select)
                     
                     nouvel_eleve = Eleve(
                         matricule=matricule,
@@ -63,7 +88,7 @@ def afficher_eleves(niveau_actif=None):
                         telephone=telephone,
                         montant_reduction=montant_reduction,
                         classe_id=classe_id,
-                        parent_id=parent_id # <--- Liaison avec le parent
+                        parent_id=parent_id
                     )
                     db.add(nouvel_eleve)
                     
@@ -75,6 +100,7 @@ def afficher_eleves(niveau_actif=None):
                     ))
                     
                     db.commit()
+                    st.cache_data.clear()  # Vider le cache après l'écriture
                     st.success(f"✅ Élève {nom} {prenom} inscrit avec succès !")
                     st.rerun()
             else:
@@ -84,9 +110,9 @@ def afficher_eleves(niveau_actif=None):
     
     # --- ESPACE DE CORRECTION / SUPPRESSION ---
     with st.expander("🛠️ Supprimer ou corriger un élève"):
-        eleves_cycle = db.query(Eleve).join(Classe).filter(Classe.cycle == niveau_actif).order_by(Eleve.nom).all()
+        eleves_cycle = donnees_cache["eleves"]
         if eleves_cycle:
-            options_e = {f"Matricule: {e.matricule} - {e.nom} {e.prenom}": e.id for e in eleves_cycle}
+            options_e = {f"Matricule: {e['matricule']} - {e['nom']} {e['prenom']}": e['id'] for e in eleves_cycle}
             choix_e = st.selectbox("Sélectionner l'élève", list(options_e.keys()))
             
             if st.button("🗑️ Supprimer définitivement cet élève", type="primary"):
@@ -96,6 +122,7 @@ def afficher_eleves(niveau_actif=None):
                     nom_complet = f"{e_obj.nom} {e_obj.prenom} ({e_obj.matricule})"
                     db.delete(e_obj)
                     db.commit()
+                    st.cache_data.clear()  # Vider le cache après suppression
                     st.success(f"✅ L'élève {nom_complet} a été supprimé.")
                     st.rerun()
         else:
@@ -103,16 +130,16 @@ def afficher_eleves(niveau_actif=None):
 
     st.markdown("---")
     
-    # --- LISTE DES ÉLÈVES ---
+    # --- LISTE DES ÉLÈVES (Via le cache) ---
     st.write(f"### 📋 Liste des élèves inscrits - {niveau_actif}")
-    tous_eleves = db.query(Eleve).join(Classe).filter(Classe.cycle == niveau_actif).order_by(Eleve.nom).all()
+    tous_eleves = donnees_cache["eleves"]
     if tous_eleves:
         data = [{
-            "Matricule": e.matricule,
-            "Nom": e.nom,
-            "Prénom": e.prenom,
-            "Classe": e.classe.nom if e.classe else "N/A",
-            "Parent lié": e.parent.username if e.parent else "Aucun"
+            "Matricule": e["matricule"],
+            "Nom": e["nom"],
+            "Prénom": e["prenom"],
+            "Classe": e["classe_nom"],
+            "Parent lié": e["parent_nom"]
         } for e in tous_eleves]
         st.dataframe(pd.DataFrame(data), use_container_width=True)
     else:
