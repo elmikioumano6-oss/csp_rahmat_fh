@@ -8,7 +8,6 @@ import base64
 from io import BytesIO
 
 def afficher_login():
-    # Fonction pour convertir l'image en base64 afin de l'insérer proprement en HTML centré
     def get_image_base64(path):
         if os.path.exists(path):
             img = Image.open(path)
@@ -19,25 +18,25 @@ def afficher_login():
 
     logo_b64 = get_image_base64("Logo CSP-RAHMAT-FH.png")
     
-    st.markdown(f"""
+    st.markdown("""
         <style>
-            #MainMenu {{visibility: hidden;}}
-            footer {{visibility: hidden;}}
-            header {{visibility: hidden;}}
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
             
-            .stApp {{
+            .stApp {
                 background: linear-gradient(135deg, #0B132B 0%, #1C2541 50%, #581C25 100%);
-            }}
+            }
             
-            .auth-container {{
+            .auth-container {
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 width: 100%;
                 padding: 10px;
-            }}
+            }
             
-            .auth-card {{
+            .auth-card {
                 background: rgba(15, 23, 42, 0.95);
                 backdrop-filter: blur(16px);
                 border: 1px solid rgba(220, 38, 38, 0.3);
@@ -49,16 +48,16 @@ def afficher_login():
                 margin: 0 auto;
             }
             
-            @media (max-width: 640px) {{
-                .auth-card {{
+            @media (max-width: 640px) {
+                .auth-card {
                     padding: 1.2rem 0.8rem;
                     border: none;
                     box-shadow: none;
                     background: transparent;
-                }}
-            }}
+                }
+            }
             
-            .auth-header-title {{
+            .auth-header-title {
                 color: #CBD5E1;
                 font-size: 0.7rem;
                 text-align: center;
@@ -66,9 +65,9 @@ def afficher_login():
                 letter-spacing: 2px;
                 font-weight: 700;
                 margin-bottom: 6px;
-            }}
+            }
             
-            .modules-ticker-container {{
+            .modules-ticker-container {
                 background: rgba(30, 41, 59, 0.8);
                 border: 1px solid rgba(220, 38, 38, 0.4);
                 border-radius: 10px;
@@ -77,44 +76,43 @@ def afficher_login():
                 padding: 5px 0;
                 margin-bottom: 1rem;
                 box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-            }}
+            }
             
-            .modules-ticker-text {{
+            .modules-ticker-text {
                 display: inline-block;
                 padding-left: 100%;
                 animation: ticker 25s linear infinite;
                 color: #F8FAFC;
                 font-size: 0.75rem;
                 font-weight: 600;
-            }}
+            }
             
-            @keyframes ticker {{
-                0% {{ transform: translate3d(0, 0, 0); }}
-                100% {{ transform: translate3d(-100%, 0, 0); }}
-            }}
+            @keyframes ticker {
+                0% { transform: translate3d(0, 0, 0); }
+                100% { transform: translate3d(-100%, 0, 0); }
+            }
             
-            /* --- CENTRAGE ABSOLU DU LOGO EN HTML/CSS --- */
-            .logo-wrapper {{
+            .logo-wrapper {
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 width: 100%;
                 margin-bottom: 0.5rem;
-            }}
-            .logo-wrapper img {{
+            }
+            .logo-wrapper img {
                 width: 75px;
                 height: auto;
                 display: block;
-            }}
+            }
             
-            .auth-title {{
+            .auth-title {
                 color: #F8FAFC;
                 font-weight: 800;
                 font-size: 1.25rem;
                 text-align: center;
                 margin-top: 0.2rem;
-            }}
-            .auth-subtitle {{
+            }
+            .auth-subtitle {
                 color: #EF4444;
                 font-size: 0.7rem;
                 text-align: center;
@@ -122,31 +120,31 @@ def afficher_login():
                 text-transform: uppercase;
                 letter-spacing: 1.5px;
                 font-weight: 700;
-            }}
+            }
             
-            .stTextInput input {{
+            .stTextInput input {
                 background-color: #1E293B !important;
                 color: #FFFFFF !important;
                 border: 1px solid #334155 !important;
                 border-radius: 8px !important;
                 padding: 7px 10px !important;
                 font-size: 0.85rem !important;
-            }}
+            }
             
-            label {{
+            label {
                 color: #EF4444 !important;
                 font-weight: 700 !important;
                 font-size: 0.9rem !important;
-            }}
+            }
             
-            .stButton button {{
+            .stButton button {
                 background: linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%) !important;
                 color: #FFFFFF !important;
                 font-weight: 600 !important;
                 border-radius: 8px !important;
                 border: none !important;
                 padding: 0.45rem 1rem !important;
-            }}
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -175,7 +173,6 @@ def afficher_login():
         </div>
     """, unsafe_allow_html=True)
     
-    # Affichage du logo centré par CSS pur
     if logo_b64:
         st.markdown(f"""
             <div class="logo-wrapper">
