@@ -466,7 +466,7 @@ def main():
         elif page == "Dépenses":
             afficher_depenses(niveau_actif)
         elif page == "Rapports":
-            afficher_rapports(niveau_actif)
+            afficher_rapports(niveau_rafactif if 'niveau_rafactif' in locals() else niveau_actif)
         elif page == "Journal d'activité":
             afficher_journal_activite(niveau_actif)
         elif page == "Messages":
