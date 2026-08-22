@@ -265,6 +265,7 @@ from views.photos_masse import afficher_import_photos_masse
 from views.planification import afficher_planification
 from views.presence import afficher_presence
 from views.rapports import afficher_rapports
+from views.stats_encaissements import afficher_stats_encaissements
 from views.supervision_cahier import afficher_supervision_cahier
 from views.supervision_progression import afficher_supervision_progression
 from views.tableau_finances import afficher_tableau_finances
@@ -325,14 +326,14 @@ def main():
                     "Consultations des notes", "Conseil de classe", "Bulletins", 
                     "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
                     "Emploi du temps", "Planification des évaluations", "Encaissement", 
-                    "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
+                    "Stats Encaissements", "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
                     "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord",
                 ],
                 icons=[
                     "house", "calendar-event", "building", "book", "person-badge", "shield-lock", "people-fill",
                     "people", "folder-plus", "card-list", "book-half", "journal-text", "people-fill", 
                     "file-earmark-text", "eye", "file-earmark-pdf", "graph-up-arrow", "calendar3", 
-                    "calendar-check", "cash-coin", "wallet2", "graph-up", "receipt", "file-bar-graph", 
+                    "calendar-check", "cash-coin", "graph-up", "wallet2", "graph-up", "receipt", "file-bar-graph", 
                     "clock-history", "chat-dots", "person-badge", "speedometer",
                 ],
                 menu_icon="cast", default_index=0,
@@ -455,6 +456,10 @@ def main():
             afficher_planification(niveau_actif)
         elif page == "Encaissement":
             afficher_finances(niveau_actif)
+        elif page == "Stats Encaissements":
+            afficher_stats_encaissements(niveau_actif)
+        elif page == "Soldes & Impayés":
+            afficher_soldes_impayes(niveau_actif) if "afficher_soldes_impayes" in globals() else st.info("Module en cours")
         elif page == "Tableau Finances":
             afficher_tableau_finances(niveau_actif)
         elif page == "Dépenses":
