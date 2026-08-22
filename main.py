@@ -14,33 +14,37 @@ from database.models import (
 )
 from sqlalchemy import text
 import streamlit as st
+from streamlit_option_menu import option_menu
 from views.login import afficher_login
 
-# Initialisation sécurisée de la base de données
-try:
-    Base.metadata.create_all(bind=engine)
-except Exception as e:
-    print(f"Tables déjà existantes ou initialisées : {e}")
+st.set_page_config(
+    page_title="CSP RAHMAT-FH - Gestion d'Élite",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# --- INITIALISATION UNIQUE EN MÉMOIRE (Supprime la latence à chaque clic) ---
+if "db_initialized" not in st.session_state:
+    try:
+        Base.metadata.create_all(bind=engine)
+        db_init = SessionLocal()
+        admin_check = db_init.query(User).filter(User.username == "admin").first()
+        if not admin_check:
+            sel = bcrypt.gensalt()
+            hashed_pwd = bcrypt.hashpw(
+                "password123".encode("utf-8"), sel
+            ).decode("utf-8")
+            nouvel_admin = User(username="admin", password=hashed_pwd, role="admin")
+            db_init.add(nouvel_admin)
+            db_init.commit()
+        db_init.close()
+    except Exception as e:
+        print(f"Init error: {e}")
+    st.session_state["db_initialized"] = True
 
 # ==========================================
-# AUTO-INITIALISATION DE LA BASE ET DE L'ADMIN
+# CACHE GLOBAL DES DONNÉES DE RÉFÉRENCE
 # ==========================================
-db_init = SessionLocal()
-try:
-    admin_check = db_init.query(User).filter(User.username == "admin").first()
-    if not admin_check:
-        sel = bcrypt.gensalt()
-        hashed_pwd = bcrypt.hashpw(
-            "password123".encode("utf-8"), sel
-        ).decode("utf-8")
-        nouvel_admin = User(username="admin", password=hashed_pwd, role="admin")
-        db_init.add(nouvel_admin)
-        db_init.commit()
-except Exception as e:
-    print(f"Erreur lors de l'initialisation de l'admin : {e}")
-finally:
-    db_init.close()
-
 @st.cache_data(ttl=300)
 def charger_references_globales():
     db = SessionLocal()
@@ -51,18 +55,17 @@ def charger_references_globales():
     finally:
         db.close()
 
+# ==========================================
+# CONFIGURATION DE LA PAGE AVEC LOGO
+# ==========================================
 try:
     icone_ecole = Image.open("Logo CSP-RAHMAT-FH.png")
 except Exception:
     icone_ecole = "🏫"
 
-st.set_page_config(
-    page_title="CSP RAHMAT-FH - Gestion d'Élite",
-    page_icon=icone_ecole,
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
+# ==========================================
+# BLOC DE SÉCURITÉ PERSISTANT
+# ==========================================
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
     st.session_state["user_role"] = "admin"
@@ -81,7 +84,7 @@ def main():
     annee_libelle = refs["annee_libelle"]
     role = st.session_state.get("user_role", "admin")
 
-    # --- BARRE LATÉRALE : NAVIGATION NATIVE ULTRA-STABLE ---
+    # --- BARRE LATÉRALE : MENU INTÉGRAL ---
     with st.sidebar:
         st.markdown(
             f"""
@@ -113,26 +116,68 @@ def main():
         st.markdown("---")
 
         if role == "admin":
-            st.markdown("<p style='color: #D97706; font-weight: bold; font-size: 0.9rem;'>🧭 NAVIGATION ADMIN</p>", unsafe_allow_html=True)
-            pages_admin = [
-                "Accueil", "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
-                "Personnels et rôles", "Gestion Comptes", "Inscription Élèves", 
-                "Import Photos en Masse", "Cartes Scolaires", "Espace Profs", 
-                "Consultations des notes", "Conseil de classe", "Bulletins", 
-                "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
-                "Emploi du temps", "Planification des évaluations", "Encaissement", 
-                "Stats Encaissements", "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
-                "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord", "Alerte Pédagogique", "Sauvegarde & BD"
-            ]
-            page = st.selectbox("Menu", pages_admin, label_visibility="collapsed", key="nav_admin_native")
-
+            page = option_menu(
+                "NAVIGATION",
+                [
+                    "Accueil", "Année scolaire", "Classes & Tarifs", "Matières & Coeffs", "Enseignants", 
+                    "Personnels et rôles", "Gestion Comptes", "Inscription Élèves", 
+                    "Import Photos en Masse", "Cartes Scolaires", "Espace Profs", 
+                    "Consultations des notes", "Conseil de classe", "Bulletins", 
+                    "Supervision cahier", "Import Programmes PDF", "Suivi des Programmes", 
+                    "Emploi du temps", "Planification des évaluations", "Encaissement", 
+                    "Stats Encaissements", "Soldes & Impayés", "Tableau Finances", "Dépenses", "Rapports", 
+                    "Journal d'activité", "Messages", "Espace Parent", "Tableau de bord", "Alerte Pédagogique", "Sauvegarde & BD"
+                ],
+                icons=[
+                    "house", "calendar-event", "building", "book", "person-badge", "shield-lock", "people-fill",
+                    "people", "folder-plus", "card-list", "book-half", "journal-text", "people-fill", 
+                    "file-earmark-text", "eye", "file-earmark-pdf", "graph-up-arrow", "calendar3", 
+                    "calendar-check", "cash-coin", "graph-up", "wallet2", "graph-up", "receipt", "file-bar-graph", 
+                    "clock-history", "chat-dots", "person-badge", "speedometer", "exclamation-triangle", "hdd-stack"
+                ],
+                menu_icon="cast", default_index=0,
+                key="menu_admin_normal",
+                styles={
+                    "container": {"padding": "5px", "background-color": "#0F172A"},
+                    "icon": {"color": "#D97706", "font-size": "16px"},
+                    "nav-link": {
+                        "font-size": "13px", "text-align": "left", "margin": "3px 0px", 
+                        "color": "#E2E8F0", "--hover-color": "#1E293B",
+                    },
+                    "nav-link-selected": {"background-color": "#D97706"},
+                },
+            )
         elif role == "parent":
-            st.markdown("<p style='color: #10B981; font-weight: bold; font-size: 0.9rem;'>🧭 ESPACE PARENT</p>", unsafe_allow_html=True)
-            page = st.selectbox("Menu", ["Mon Enfant"], label_visibility="collapsed", key="nav_parent_native")
-
+            page = option_menu(
+                "ESPACE PARENT", ["Mon Enfant"], icons=["person-badge"], 
+                menu_icon="shield-lock", default_index=0,
+                key="menu_parent_normal",
+                styles={
+                    "container": {"padding": "5px", "background-color": "#0F172A"},
+                    "icon": {"color": "#10B981", "font-size": "16px"},
+                    "nav-link": {
+                        "font-size": "13px", "text-align": "left", "margin": "3px 0px", 
+                        "color": "#E2E8F0", "--hover-color": "#1E293B",
+                    },
+                    "nav-link-selected": {"background-color": "#10B981"},
+                },
+            )
         elif role == "prof":
-            st.markdown("<p style='color: #F59E0B; font-weight: bold; font-size: 0.9rem;'>🧭 ESPACE PROF</p>", unsafe_allow_html=True)
-            page = st.selectbox("Menu", ["Saisie de notes", "Présence", "Cahier de texte"], label_visibility="collapsed", key="nav_prof_native")
+            page = option_menu(
+                "ESPACE PROF", ["Saisie de notes", "Présence", "Cahier de texte"], 
+                icons=["pencil-square", "calendar-check", "journal-bookmark"], 
+                menu_icon="book-half", default_index=0,
+                key="menu_prof_normal",
+                styles={
+                    "container": {"padding": "5px", "background-color": "#0F172A"},
+                    "icon": {"color": "#F59E0B", "font-size": "16px"},
+                    "nav-link": {
+                        "font-size": "13px", "text-align": "left", "margin": "3px 0px", 
+                        "color": "#E2E8F0", "--hover-color": "#1E293B",
+                    },
+                    "nav-link-selected": {"background-color": "#F59E0B"},
+                },
+            )
         else:
             page = "Accueil"
 
@@ -163,7 +208,7 @@ def main():
     if role == "admin":
         st.markdown("---")
 
-    # --- ROUTAGE SÉCURISÉ ---
+    # --- ROUTAGE AVEC CHARGEMENT DIFFÉRÉ ---
     if role == "admin":
         if page == "Accueil":
             from views.accueil import afficher_accueil
