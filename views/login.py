@@ -28,6 +28,33 @@ def afficher_login():
                 margin: 0 auto;
             }
             
+            /* --- RECTANGLE DÉFILANT DES MODULES AU-DESSUS DU LOGO --- */
+            .modules-ticker-container {
+                background: rgba(30, 41, 59, 0.8);
+                border: 1px solid rgba(220, 38, 38, 0.4);
+                border-radius: 10px;
+                overflow: hidden;
+                white-space: nowrap;
+                padding: 6px 0;
+                margin-bottom: 1.2rem;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            }
+            
+            .modules-ticker-text {
+                display: inline-block;
+                padding-left: 100%;
+                animation: ticker 22s linear infinite;
+                color: #F8FAFC;
+                font-size: 0.8rem;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+            }
+            
+            @keyframes ticker {
+                0% { transform: translate3d(0, 0, 0); }
+                100% { transform: translate3d(-100%, 0, 0); }
+            }
+            
             .auth-title {
                 color: #F8FAFC;
                 font-weight: 800;
@@ -81,14 +108,30 @@ def afficher_login():
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div style='height: 5vh;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 3vh;'></div>", unsafe_allow_html=True)
 
     _, col_center, _ = st.columns([1.5, 1, 1.5])
 
     with col_center:
         st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
         
-        # --- CENTRAGE STRICT DU LOGO AVEC DES COLONNES INTERNES ÉQUILIBRÉES ---
+        # --- RECTANGLE AVEC TEXTE DÉFILANT DES MODULES ---
+        st.markdown("""
+            <div class="modules-ticker-container">
+                <div class="modules-ticker-text">
+                    📚 Suivi Académique &nbsp;&bull;&nbsp; 
+                    📝 Saisie des Notes &nbsp;&bull;&nbsp; 
+                    📊 Bulletins & Conseils de Classe &nbsp;&bull;&nbsp; 
+                    💳 Cartes Scolaires &nbsp;&bull;&nbsp; 
+                    💰 Gestion Financière & Encaissements &nbsp;&bull;&nbsp; 
+                    🏫 Emplois du Temps & &Eacute;valuations &nbsp;&bull;&nbsp; 
+                    👨‍👩‍👧 Espace Parent &nbsp;&bull;&nbsp; 
+                    📋 Cahier de Texte & Suivi des Programmes
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # --- CENTRAGE STRICT DU LOGO AU-DESSUS DU TITRE ---
         c_left, c_mid, c_right = st.columns([1, 1.2, 1])
         with c_mid:
             try:
@@ -106,7 +149,7 @@ def afficher_login():
                 <div class="auth-subtitle">Portail d'Administration</div>
         """, unsafe_allow_html=True)
 
-        with st.form("form_login_parfait"):
+        with st.form("form_login_modules"):
             username = st.text_input("Nom d'utilisateur", placeholder="Votre identifiant...")
             password = st.text_input("Mot de passe", type="password", placeholder="••••••••")
             
