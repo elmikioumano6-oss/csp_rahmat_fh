@@ -36,11 +36,11 @@ from database.db_config import engine
 from database.models import Base
 from views.login import afficher_login
 
-# Initialisation sécurisée des tables pour éviter les plantages de connexion
+# Initialisation sécurisée des tables de la base de données
 try:
     Base.metadata.create_all(bind=engine)
 except Exception as e:
-    st.warning("⚠️ Connexion à la base de données en cours de rétablissement...")
+    pass
 
 # --- GESTION DE LA SESSION ET DES PARAMÈTRES URL ---
 if "authenticated" not in st.session_state:
@@ -56,6 +56,7 @@ if not st.session_state["authenticated"]:
 else:
     role = st.session_state.get("user_role", "admin")
     
+    # --- BARRE LATÉRALE ET MENU DE NAVIGATION ---
     with st.sidebar:
         if os.path.exists("Logo CSP-RAHMAT-FH.png"):
             st.image("Logo CSP-RAHMAT-FH.png", width=80)
@@ -65,12 +66,35 @@ else:
         
         st.divider()
         
+        st.markdown("### 🧭 Menu Principal")
+        
+        # Choix du module selon le rôle
+        if role == "parent":
+            menu = st.radio("Navigation", ["Espace Parent", "Bulletins & Notes"])
+        else:
+            menu = st.selectbox(
+                "Sélectionner un module",
+                [
+                    "🏠 Tableau de Bord",
+                    "👥 Gestion des Élèves",
+                    "📝 Saisie & Notes",
+                    "📊 Bulletins & Classes",
+                    "💳 Cartes Scolaires",
+                    "💰 Gestion Financière",
+                    "🏫 Emplois du Temps",
+                    "📋 Suivi des Programmes"
+                ]
+            )
+        
+        st.divider()
+        
         if st.button("🚪 Déconnexion", use_container_width=True):
             st.session_state["authenticated"] = False
             st.session_state.clear()
             st.query_params.clear()
             st.rerun()
 
+    # --- EN-TÊTE DE LA PAGE PRINCIPALE ---
     st.markdown(f"""
         <div style="background: #1E293B; padding: 1.5rem; border-radius: 12px; color: white; margin-bottom: 2rem;">
             <h2>🏫 COMPLEXE SCOLAIRE PRIVÉ RAHMAT-FH</h2>
@@ -78,11 +102,41 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
+    # --- ROUTAGE DES MODULES SÉLECTIONNÉS ---
     if role == "parent":
         try:
             from views.parent_space import afficher_espace_parent
             afficher_espace_parent()
         except ImportError:
-            st.warning("Module Espace Parent en cours de chargement...")
+            st.info("Module Espace Parent en cours de chargement...")
     else:
-        st.info(f"Bienvenue sur votre tableau de bord. Sélectionnez un module dans le menu de navigation.")
+        if menu == "🏠 Tableau de Bord":
+            st.success("Bienvenue sur le tableau de bord général du Complexe Scolaire Rahmat-FH.")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Élèves Inscrits", "---", "Actif")
+            with col2:
+                st.metric("Enseignants", "---", "Actif")
+            with col3:
+                st.metric("Classes", "---", "Actif")
+        elif menu == "👥 Gestion des Élèves":
+            st.header("👥 Gestion des Élèves")
+            st.write("Module d'inscription, de suivi et de gestion des dossiers élèves.")
+        elif menu == "📝 Saisie & Notes":
+            st.header("📝 Saisie des Notes")
+            st.write("Interface d'attribution des notes par matière et par classe.")
+        elif menu == "📊 Bulletins & Classes":
+            st.header("📊 Bulletins & Conseils de Classe")
+            st.write("Génération des bulletins trimestriels et calculs de moyennes.")
+        elif menu == "💳 Cartes Scolaires":
+            st.header("💳 Cartes Scolaires")
+            st.write("Génération et impression des cartes d'identité scolaires.")
+        elif menu == "💰 Gestion Financière":
+            st.header("💰 Gestion Financière & Encaissements")
+            st.write("Suivi des paiements de scolarité et des frais annexes.")
+        elif menu == "🏫 Emplois du Temps":
+            st.header("🏫 Emplois du Temps & Évaluations")
+            st.write("Planification des cours et calendrier des examens.")
+        elif menu == "📋 Suivi des Programmes":
+            st.header("📋 Cahier de Texte & Suivi des Programmes")
+            st.write("Suivi de l'exécution mensuelle des programmes pédagogiques.")
