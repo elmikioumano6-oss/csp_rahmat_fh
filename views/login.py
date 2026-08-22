@@ -16,7 +16,7 @@ def afficher_login():
                 background: linear-gradient(135deg, #0B132B 0%, #1C2541 50%, #581C25 100%);
             }
             
-            /* Boîte de connexion plus étroite et centrée */
+            /* Boîte de connexion étroite et centrée */
             .auth-card {
                 background: rgba(15, 23, 42, 0.95);
                 backdrop-filter: blur(16px);
@@ -28,12 +28,20 @@ def afficher_login():
                 margin: 0 auto;
             }
             
+            /* Centrage parfait du logo */
+            .logo-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 0.5rem;
+            }
+            
             .auth-title {
                 color: #F8FAFC;
                 font-weight: 800;
                 font-size: 1.35rem;
                 text-align: center;
-                margin-top: 0.3rem;
+                margin-top: 0.2rem;
                 letter-spacing: -0.5px;
             }
             .auth-subtitle {
@@ -83,30 +91,30 @@ def afficher_login():
 
     st.markdown("<div style='height: 5vh;'></div>", unsafe_allow_html=True)
 
-    # Colonnes plus larges sur les côtés pour affiner la carte centrale
     _, col_center, _ = st.columns([1.5, 1, 1.5])
 
     with col_center:
         st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
         
-        # --- LOGO RÉDUIT ET PROPRE (Sans rectangle vide au-dessus) ---
+        # --- LOGO CENTRÉ AU-DESSUS DU TITRE ---
+        st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
         try:
             logo_path = "Logo CSP-RAHMAT-FH.png"
             if os.path.exists(logo_path):
                 logo_img = Image.open(logo_path)
-                # Affichage direct et centré de l'image avec une largeur limitée
-                st.image(logo_img, width=85)
+                st.image(logo_img, width=80)
             else:
-                st.markdown("<div style='text-align: center; font-size: 2rem; margin-bottom: 5px;'>🏫</div>", unsafe_allow_html=True)
+                st.markdown("<div style='font-size: 2rem;'>🏫</div>", unsafe_allow_html=True)
         except Exception:
-            st.markdown("<div style='text-align: center; font-size: 2rem; margin-bottom: 5px;'>🏫</div>", unsafe_allow_html=True)
+            st.markdown("<div style='font-size: 2rem;'>🏫</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("""
                 <div class="auth-title">CSP RAHMAT-FH</div>
                 <div class="auth-subtitle">Portail d'Administration</div>
         """, unsafe_allow_html=True)
 
-        with st.form("form_login_compact"):
+        with st.form("form_login_centre"):
             username = st.text_input("Nom d'utilisateur", placeholder="Votre identifiant...")
             password = st.text_input("Mot de passe", type="password", placeholder="••••••••")
             
